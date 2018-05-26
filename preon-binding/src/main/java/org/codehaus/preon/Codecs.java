@@ -113,8 +113,7 @@ public class Codecs {
             in = new FileInputStream(file);
             channel = in.getChannel();
             int fileSize = (int) channel.size();
-            ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0,
-                    fileSize);
+            ByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
             return decode(codec, buffer, builder);
         } finally {
             if (channel != null) {
@@ -137,6 +136,7 @@ public class Codecs {
      */
     public static <T> void encode(T value, Codec<T> codec, BitChannel channel) throws IOException {
         codec.encode(value, channel, new NullResolver());
+        channel.flush();
     }
 
     public static <T> byte[] encode(T value, Codec<T> codec) throws IOException {
@@ -183,8 +183,7 @@ public class Codecs {
      * @return A {@link Codec} capable of decoding instances of the type passed in, taking the {@link CodecDecorator
      *         CodecDecorators} into account.
      */
-    public static <T> Codec<T> create(Class<T> type,
-                                      CodecDecorator... decorators) {
+    public static <T> Codec<T> create(Class<T> type, CodecDecorator... decorators) {
         return create(type, new CodecFactory[0], decorators);
     }
 
@@ -199,15 +198,15 @@ public class Codecs {
      * @return A {@link Codec} capable of decoding instances of the type passed in, taking the {@link CodecDecorator
      *         CodecDecorators} into account.
      */
-	public static <T> Codec<T> create(Class<T> type, CodecFactory[] factories,
-			CodecDecorator[] decorators) {
+	public static <T> Codec<T> create(Class<T> type, CodecFactory[] factories, CodecDecorator[] decorators) {
         return create(type, factories, decorators, new BindingDecorator[0]);
 	}
 
-    public static <T> Codec<T> create(Class<T> type, CodecFactory[] factories,
-            CodecDecorator[] decorators, BindingDecorator[] bindingDecorators) {
-        return new DefaultCodecFactory().create(null, type,
-                factories, decorators, bindingDecorators);
+    public static <T> Codec<T> create(Class<T> type,
+                                      CodecFactory[] factories,
+                                      CodecDecorator[] decorators,
+                                      BindingDecorator[] bindingDecorators) {
+        return new DefaultCodecFactory().create(null, type, factories, decorators, bindingDecorators);
     }
 
 }

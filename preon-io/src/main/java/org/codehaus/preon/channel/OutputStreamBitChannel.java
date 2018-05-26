@@ -199,4 +199,13 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         out.close();
     }
 
+    @Override
+    public void flush() throws IOException {
+        assert bitPos < 8;
+        if (bitPos > 0) {
+            int remaining = 8 - bitPos;
+            write(remaining, (byte)0);
+        }
+        out.flush();
+    }
 }

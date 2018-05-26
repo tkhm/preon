@@ -51,18 +51,15 @@ public class DefaultCodecFactory implements CodecFactory {
         return create(null, type, null);
     }
 
-    public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type,
-                               ResolverContext context) {
-        return create(metadata, type, new CodecFactory[0],
-                new CodecDecorator[0], new BindingDecorator[0]);
+    public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type, ResolverContext context) {
+        return create(metadata, type, new CodecFactory[0], new CodecDecorator[0], new BindingDecorator[0]);
     }
 
     public <T> Codec<T> create(AnnotatedElement metadata,
                                Class<T> type,
                                CodecFactory[] addOnFactories,
                                CodecDecorator[] addOnDecorators,
-                               BindingDecorator[] bindingDecorators)
-    {
+                               BindingDecorator[] bindingDecorators) {
 
         // The actual cache of Codecs.
         final List<Codec<?>> created = new ArrayList<Codec<?>>();
@@ -86,8 +83,7 @@ public class DefaultCodecFactory implements CodecFactory {
         decorators.add(new InitCodecDecorator());
         decorators.addAll(Arrays.asList(addOnDecorators));
 
-        DecoratingCodecFactory top = new DecoratingCodecFactory(codecFactory,
-                decorators);
+        DecoratingCodecFactory top = new DecoratingCodecFactory(codecFactory, decorators);
 
         // Add additional CodecFactories passed in.
         for (CodecFactory factory : addOnFactories) {
@@ -104,8 +100,7 @@ public class DefaultCodecFactory implements CodecFactory {
 
         // Create an ObjectCodecFactory that delegates to the
         // CompoundCodecFactory for each of its members.
-        ObjectCodecFactory objectCodecFactory = new ObjectCodecFactory(top,
-                bindingFactory);
+        ObjectCodecFactory objectCodecFactory = new ObjectCodecFactory(top, bindingFactory);
 
         // Make sure that Codecs created by the ObjectCodecFactory can be
         // cached.

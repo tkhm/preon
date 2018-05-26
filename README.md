@@ -27,4 +27,3 @@ lengths, references etc.
 Support for creating documentation of bindings using `Pecia` has been dropped due to the fact that a current
 implementation couldn't be found anywhere. Also I didn't see this as the most important feature - documentation support
 _might_ be reintroduced in the future.
-

@@ -26,11 +26,6 @@
         <module>preon-binding</module>
     </modules>
 
-    <!--modules>
-      <module>preon-samples</module>
-      <module>preon-archetypes</module>
-      <module>preon-emitter</module>
-    </modules-->
     <dependencyManagement>
         <dependencies>
             <dependency>

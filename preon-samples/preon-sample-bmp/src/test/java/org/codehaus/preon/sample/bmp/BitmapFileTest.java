@@ -35,11 +35,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 
-public class BitmapFileTest extends TestCase {
+public class BitmapFileTest {
 
-    public void setUp() {
-    }
-
+    @Test
     public void testHeightWidth() throws FileNotFoundException,
             DecodingException, IOException {
         Codec<BitmapFile> codec = Codecs.create(BitmapFile.class);

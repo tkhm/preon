@@ -24,19 +24,25 @@
  */
 package org.codehaus.preon.binding;
 
-import junit.framework.TestCase;
 import org.codehaus.preon.*;
 import org.codehaus.preon.annotation.If;
 import org.codehaus.preon.buffer.BitBuffer;
-import org.codehaus.preon.el.*;
+import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.el.Reference;
+import org.codehaus.preon.el.ReferenceContext;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 
-import static org.easymock.EasyMock.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
-public class ConditionalBindingFactoryTest extends TestCase {
+public class ConditionalBindingFactoryTest {
 
     private BindingFactory decorated;
 
@@ -62,19 +68,20 @@ public class ConditionalBindingFactoryTest extends TestCase {
 
     private Expression<Integer, Resolver> sizeExpr;
 
+    @Before
     public void setUp() {
-        binding = createMock(Binding.class);
-        decorated = createMock(BindingFactory.class);
-        buffer = createMock(BitBuffer.class);
-        resolver = createMock(Resolver.class);
+        binding = mock(Binding.class);
+        decorated = mock(BindingFactory.class);
+        buffer = mock(BitBuffer.class);
+        resolver = mock(Resolver.class);
         field = getTestField();
-        codec = createMock(Codec.class);
-        condition = createMock(If.class);
-        metadata = createMock(AnnotatedElement.class);
+        codec = mock(Codec.class);
+        condition = mock(If.class);
+        metadata = mock(AnnotatedElement.class);
         factory = new ConditionalBindingFactory(decorated);
-        builder = createMock(Builder.class);
-        context = createMock(ResolverContext.class);
-        sizeExpr = createMock(Expression.class);
+        builder = mock(Builder.class);
+        context = mock(ResolverContext.class);
+        sizeExpr = mock(Expression.class);
     }
 
     private static Field getTestField() {
@@ -86,45 +93,44 @@ public class ConditionalBindingFactoryTest extends TestCase {
         return null;
     }
 
+    @Test
     public void testConditionals() throws CodecException {
         testConditionalLoad("a > b", 3, 2, true, false);
         testConditionalLoad("a > b", 1, 1, false, false);
         testConditionalLoad("a > b", 2, 3, false, false);
     }
 
-    public void testConditionalLoad(String expr, int a, int b, boolean bindingAction,
+    private void testConditionalLoad(String expr, int a, int b, boolean bindingAction,
                                     boolean compilationFailure) throws DecodingException {
-        Test test = new Test();
+        TestSubject test = new TestSubject();
         test.value = "whatever";
-        expect(metadata.getAnnotation(If.class)).andReturn(condition);
-        expect(condition.value()).andReturn(expr);
-        expect(decorated.create(metadata, field, codec, context, null)).andReturn(binding);
+        when(metadata.getAnnotation(If.class)).thenReturn(condition);
+        when(condition.value()).thenReturn(expr);
+        when(decorated.create(metadata, field, codec, context)).thenReturn(binding);
         if (!compilationFailure) {
-            expect(context.selectAttribute("a")).andReturn(new SimpleIntegerReference("a")); // Reference not used
-            expect(context.selectAttribute("b")).andReturn(new SimpleIntegerReference("b")); // Reference not used
-            expect(resolver.get("a")).andReturn(Integer.valueOf(a)).anyTimes();
-            expect(resolver.get("b")).andReturn(Integer.valueOf(b)).anyTimes();
+            when(context.selectAttribute("a")).thenReturn(new SimpleIntegerReference("a")); // Reference not used
+            when(context.selectAttribute("b")).thenReturn(new SimpleIntegerReference("b")); // Reference not used
+            when(resolver.get("a")).thenReturn(Integer.valueOf(a));
+            when(resolver.get("b")).thenReturn(Integer.valueOf(b));
         }
         if (bindingAction) {
-            expect(binding.getSize()).andReturn(sizeExpr);
-            expect(sizeExpr.eval(resolver)).andReturn(6);
+            when(binding.getSize()).thenReturn(sizeExpr);
+            when(sizeExpr.eval(resolver)).thenReturn(6);
             binding.load(test, buffer, resolver, builder);
         } else {
-            expect(binding.getSize()).andReturn(sizeExpr);
+            when(binding.getSize()).thenReturn(sizeExpr);
         }
-        replay(decorated, buffer, resolver, metadata, codec, condition, binding, builder, context, sizeExpr);
-        Binding conditionalBinding = factory.create(metadata, field, codec, context, null);
+
+        Binding conditionalBinding = factory.create(metadata, field, codec, context);
         if (bindingAction) {
             assertEquals(Integer.valueOf(6), conditionalBinding.getSize().eval(resolver));
         } else {
             assertEquals(Integer.valueOf(0), conditionalBinding.getSize().eval(resolver));
         }
         conditionalBinding.load(test, buffer, resolver, builder);
-        verify(decorated, buffer, resolver, metadata, codec, condition, binding, builder, context, sizeExpr);
-        reset(decorated, buffer, resolver, metadata, codec, condition, binding, builder, context, sizeExpr);
     }
 
-    public static class Test {
+    public static class TestSubject {
 
         public String value;
 
@@ -161,10 +167,6 @@ public class ConditionalBindingFactoryTest extends TestCase {
 
         public Reference<Resolver> selectItem(Expression<Integer, Resolver> index) {
             throw new BindingException("Item selection not allowed.");
-        }
-
-        public void document(Document target) {
-            // No way
         }
 
         public Class<?> getType() {

@@ -24,13 +24,12 @@
  */
 package org.codehaus.preon.el.ctx;
 
-import java.lang.reflect.Array;
-
-import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.el.Expressions;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
+
+import java.lang.reflect.Array;
 
 /**
  * A reference to an array element.
@@ -143,52 +142,13 @@ public class ArrayElementReference<T> implements Reference<T> {
         return arrayReference.equals(other.arrayReference) && index.equals(other.index);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
-     */
-
-    public void document(Document target) {
-        if (!index.isParameterized()) {
-            target.text("the ");
-            target.text(toNth(index.eval(null)));
-            target.text(" element of ");
-            arrayReference.document(target);
-        } else {
-            target.text("the nth element of ");
-            arrayReference.document(target);
-            target.text(" (with n being ");
-            index.document(target);
-            target.text(")");
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Reference#getReferenceContext()
-     */
-
     public ReferenceContext<T> getReferenceContext() {
         return context;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Reference#isAssignableTo(java.lang.Class)
-     */
-
     public boolean isAssignableTo(Class<?> type) {
         return elementType.isAssignableFrom(type);
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Reference#getType()
-     */
 
     public Class<?> getType() {
         return elementType;

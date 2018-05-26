@@ -24,8 +24,6 @@
  */
 package org.codehaus.preon.codec;
 
-import nl.flotsam.pecia.Documenter;
-import nl.flotsam.pecia.ParaContents;
 import org.codehaus.preon.*;
 import org.codehaus.preon.annotation.Bound;
 import org.codehaus.preon.annotation.BoundObject;
@@ -117,14 +115,11 @@ public class ObjectCodecFactory implements CodecFactory {
                 context);
         passThroughContext = ImportSupportingObjectResolverContext.decorate(
                 passThroughContext, type);
-        CodecReference reference = new CodecReference();
-        harvestBindings(type, passThroughContext, reference);
+        harvestBindings(type, passThroughContext);
         if (passThroughContext.getBindings().size() == 0) {
             throw new CodecConstructionException("Failed to find a single bound field on " + type.getName());
         }
-        ObjectCodec<T> result = new ObjectCodec<T>(type, rewriter,
-                passThroughContext);
-        reference.setCodec(result);
+        ObjectCodec<T> result = new ObjectCodec<T>(type, rewriter, passThroughContext);
         return result;
     }
 
@@ -160,12 +155,11 @@ public class ObjectCodecFactory implements CodecFactory {
         return new HidingAnnotatedElement(BoundObject.class, metadata);
     }
 
-    private <T> void harvestBindings(Class<T> type,
-                                     ObjectResolverContext context, CodecReference reference) {
+    private <T> void harvestBindings(Class<T> type, ObjectResolverContext context) {
         if (Object.class.equals(type)) {
             return;
         }
-        harvestBindings(type.getSuperclass(), context, reference);
+        harvestBindings(type.getSuperclass(), context);
         Field[] fields = type.getDeclaredFields();
         // For creating the Codecs, we already need a modified
         // ReferenceContext, allowing us to incrementally bind to references
@@ -176,27 +170,10 @@ public class ObjectCodecFactory implements CodecFactory {
                 Codec<?> codec = codecFactory.create(field, field.getType(),
                         context);
                 if (codec != null) {
-                    Binding binding = bindingFactory.create(field, field,
-                            codec, context, reference);
+                    Binding binding = bindingFactory.create(field, field, codec, context);
                     context.add(field.getName(), binding);
                 }
             }
         }
     }
-
-    private static class CodecReference implements Documenter<ParaContents<?>> {
-
-        private Codec<?> codec;
-
-        public void document(ParaContents<?> target) {
-            target.document(codec.getCodecDescriptor().reference(CodecDescriptor.Adjective.THE,
-                    false));
-        }
-
-        public void setCodec(Codec<?> codec) {
-            this.codec = codec;
-        }
-
-    }
-
 }

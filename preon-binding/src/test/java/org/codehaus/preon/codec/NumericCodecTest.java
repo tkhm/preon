@@ -24,20 +24,19 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.Resolver;
 import org.codehaus.preon.buffer.ByteOrder;
 import org.codehaus.preon.channel.BitChannel;
+import org.codehaus.preon.el.Expression;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import static org.mockito.Mockito.when;
-
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NumericCodecTest {

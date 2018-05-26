@@ -27,7 +27,6 @@ package org.codehaus.preon.el.ast;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
 import org.codehaus.preon.el.util.Converter;
@@ -35,8 +34,7 @@ import org.codehaus.preon.el.util.Converters;
 
 /**
  * A {@link Node} with the ability to convert to other types of {@link Node}s.
- * Use the static {@link #tryConversion(Node, Class)} and
- * {@link #tryConversionToIntegerNode(Node, Class)} to convert Nodes in some
+ * Use the static {@link #tryConversion(Node, Class)} to convert Nodes in some
  * other type of node.
  * 
  * @author Wilfred Springer (wis)
@@ -108,10 +106,6 @@ public class ConvertingNode<T extends Comparable<T>, E, S> implements Node<T, E>
 
     public boolean isParameterized() {
         return source.isParameterized();
-    }
-
-    public void document(Document target) {
-        source.document(target);
     }
 
     public static <T extends Comparable<T>, E, S> Node<?, E> tryConversion(Node<S, E> source, Class<T> targetType) {

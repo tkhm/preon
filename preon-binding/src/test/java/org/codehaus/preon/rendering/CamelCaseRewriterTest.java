@@ -24,10 +24,13 @@
  */
 package org.codehaus.preon.rendering;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class CamelCaseRewriterTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class CamelCaseRewriterTest {
+
+    @Test
     public void testRewriting() {
         CamelCaseRewriter rewriter = new CamelCaseRewriter();
         assertEquals(rewriter.rewrite("abcDefGhi"), "Abc def ghi");

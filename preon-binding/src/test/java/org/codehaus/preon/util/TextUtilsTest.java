@@ -25,9 +25,13 @@
 package org.codehaus.preon.util;
 
 import junit.framework.TestCase;
+import org.junit.Test;
 
-public class TextUtilsTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class TextUtilsTest {
+
+    @Test
     public void testNumberToText() {
         assertEquals("zero", TextUtils.getNumberAsText(0));
         assertEquals("twenty", TextUtils.getNumberAsText(20));
@@ -35,6 +39,7 @@ public class TextUtilsTest extends TestCase {
         assertEquals("22", TextUtils.getNumberAsText(22));
     }
 
+    @Test
     public void testPositionToText() {
         assertEquals("first", TextUtils.getPositionAsText(0));
         assertEquals("second", TextUtils.getPositionAsText(1));

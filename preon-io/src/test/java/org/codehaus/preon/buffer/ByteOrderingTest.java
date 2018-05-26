@@ -24,10 +24,13 @@
  */
 package org.codehaus.preon.buffer;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class ByteOrderingTest extends TestCase {
+import static org.junit.Assert.assertEquals;
 
+public class ByteOrderingTest {
+
+    @Test
     public void testRightToLeftBigEndian() {
         byte[] buffer = {0x12 // 0001 0010
                 , 0x34 // 0011 0100
@@ -79,9 +82,4 @@ public class ByteOrderingTest extends TestCase {
         }
         return result;
     }
-
-    private static int bytesRequired(long bitPos, int nrBits) {
-        return (int) (((bitPos % 8) + nrBits + 7) / 8);
-    }
-
 }

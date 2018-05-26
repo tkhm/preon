@@ -24,13 +24,13 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.el.Expression;
-import nl.flotsam.pecia.Documenter;
-import nl.flotsam.pecia.ParaContents;
-import nl.flotsam.pecia.SimpleContents;
-import org.codehaus.preon.*;
+import org.codehaus.preon.Builder;
+import org.codehaus.preon.Codec;
+import org.codehaus.preon.DecodingException;
+import org.codehaus.preon.Resolver;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.channel.BitChannel;
+import org.codehaus.preon.el.Expression;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -64,44 +64,6 @@ public class ListBasedMapCodec<K,V> implements Codec<Map<K,V>> {
 
     public Expression<Integer, Resolver> getSize() {
         return listCodec.getSize();
-    }
-
-    public CodecDescriptor getCodecDescriptor() {
-        return new CodecDescriptor() {
-
-            public <C extends ParaContents<?>> Documenter<C> summary() {
-                return new Documenter<C>() {
-                    public void document(C target) {
-                        target.document(reference(Adjective.A, true)).text(".");
-                    }
-                };
-            }
-
-            public <C extends ParaContents<?>> Documenter<C> reference(final Adjective adjective,
-                                                                       final boolean startWithCapital)
-            {
-                 return new Documenter<C>() {
-                        public void document(C target) {
-                            target.text(adjective.asTextPreferA(startWithCapital)).text(
-                                    "map produced from a ").document(
-                                    listCodec.getCodecDescriptor().reference(
-                                            Adjective.NONE, false));
-                        }
-                    };
-            }
-
-            public <C extends SimpleContents<?>> Documenter<C> details(String bufferReference) {
-                return listCodec.getCodecDescriptor().details(bufferReference);
-            }
-
-            public boolean requiresDedicatedSection() {
-                return false;
-            }
-
-            public String getTitle() {
-                return null;
-            }
-        };
     }
 
     public Class<?>[] getTypes() {

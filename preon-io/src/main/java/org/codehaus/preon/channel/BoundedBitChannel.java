@@ -26,8 +26,6 @@ package org.codehaus.preon.channel;
 
 import org.codehaus.preon.buffer.ByteOrder;
 
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -48,7 +46,7 @@ public class BoundedBitChannel implements BitChannel {
      * @param channel The {@link BitChannel} to wrap.
      * @param maxBits The maximum number of bits accepted.
      */
-    public BoundedBitChannel(@Nonnull BitChannel channel, @Nonnegative long maxBits) {
+    public BoundedBitChannel(BitChannel channel, long maxBits) {
         assert channel != null;
         assert maxBits >= 0;
         this.channel = channel;

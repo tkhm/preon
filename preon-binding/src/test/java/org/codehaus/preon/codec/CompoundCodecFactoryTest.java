@@ -24,21 +24,21 @@
  */
 package org.codehaus.preon.codec;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-
-import java.lang.reflect.AnnotatedElement;
-
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.CodecFactory;
 import org.codehaus.preon.ResolverContext;
+import org.junit.Before;
+import org.junit.Test;
 
-import junit.framework.TestCase;
+import java.lang.reflect.AnnotatedElement;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
-public class CompoundCodecFactoryTest extends TestCase {
+public class CompoundCodecFactoryTest {
 
     private CodecFactory delegate1;
 
@@ -52,34 +52,29 @@ public class CompoundCodecFactoryTest extends TestCase {
 
     private CompoundCodecFactory factory;
 
+    @Before
     public void setUp() {
-        delegate1 = createMock(CodecFactory.class);
-        delegate2 = createMock(CodecFactory.class);
-        codec = createMock(Codec.class);
-        context = createMock(ResolverContext.class);
+        delegate1 = mock(CodecFactory.class);
+        delegate2 = mock(CodecFactory.class);
+        codec = mock(Codec.class);
+        context = mock(ResolverContext.class);
         factory = new CompoundCodecFactory();
         factory.add(delegate1);
         factory.add(delegate2);
     }
 
+    @Test
     public void testNoMatch() {
-        expect(delegate1.create(metadata, Integer.class, context))
-                .andReturn(null);
-        expect(delegate2.create(metadata, Integer.class, context))
-                .andReturn(null);
-        replay(delegate1, delegate2, context);
+        when(delegate1.create(metadata, Integer.class, context)).thenReturn(null);
+        when(delegate2.create(metadata, Integer.class, context)).thenReturn(null);
         assertNull(factory.create(metadata, Integer.class, context));
-        verify(delegate1, delegate2, context);
     }
 
+    @Test
     public void testSecondMatch() {
-        expect(delegate1.create(metadata, Integer.class, context))
-                .andReturn(null);
-        expect(delegate2.create(metadata, Integer.class, context))
-                .andReturn(codec);
-        replay(delegate1, delegate2, context);
+        when(delegate1.create(metadata, Integer.class, context)).thenReturn(null);
+        when(delegate2.create(metadata, Integer.class, context)).thenReturn(codec);
         assertEquals(codec, factory.create(metadata, Integer.class, context));
-        verify(delegate1, delegate2, context);
     }
 
 }

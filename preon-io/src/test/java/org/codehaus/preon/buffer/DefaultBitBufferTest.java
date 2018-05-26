@@ -29,12 +29,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
-
 import org.apache.commons.io.IOUtils;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 
-public class DefaultBitBufferTest extends TestCase {
+public class DefaultBitBufferTest {
 
     private DefaultBitBuffer bitBuffer;
 
@@ -42,13 +44,14 @@ public class DefaultBitBufferTest extends TestCase {
 
     private int fileSize;
 
-    @Override
-    protected void setUp() throws Exception {
+    @Before
+    public void setUp() throws Exception {
         byteBuffer = getByteBuffer("testFile");
         bitBuffer = new DefaultBitBuffer(byteBuffer);
         fileSize = byteBuffer.capacity();
     }
 
+    @Test
     public void testReadBits() {
         // Ascii - dec - bin
         // File: 4 4 - 52 52 - 0100 0011 0100 0011
@@ -79,6 +82,7 @@ public class DefaultBitBufferTest extends TestCase {
         assertEquals(byteBuffer.getLong(), bitBuffer.readBits(0, 64));
     }
 
+    @Test
     public void testLittleEndianBitOffset() {
         bitBuffer = new DefaultBitBuffer(ByteBuffer.wrap(new byte[]{3, 0, 0,
                 0}));
@@ -93,6 +97,7 @@ public class DefaultBitBufferTest extends TestCase {
 
     }
 
+    @Test
     public void testBigEndianBitOffset() {
 
         // 11001010
@@ -110,6 +115,7 @@ public class DefaultBitBufferTest extends TestCase {
 
     }
 
+    @Test
     public void testReadBitsSequentially() {
         byte[] bytesReadByApp = new byte[fileSize];
         for (int i = 0; i < fileSize; i++)
@@ -123,6 +129,7 @@ public class DefaultBitBufferTest extends TestCase {
 
     }
 
+    @Test
     public void testBitOneAfterAnother() {
         assertEquals(0, bitBuffer.readBits(1));
         assertEquals(1, bitBuffer.readBits(1));
@@ -134,6 +141,7 @@ public class DefaultBitBufferTest extends TestCase {
         assertEquals(true, bitBuffer.readAsBoolean());
     }
 
+    @Test
     public void testCompleteBytes() {
         DefaultBitBuffer bitBuffer;
         bitBuffer = new DefaultBitBuffer(ByteBuffer.wrap(new byte[]{0x01,
@@ -147,6 +155,7 @@ public class DefaultBitBufferTest extends TestCase {
         assertEquals(0x0123456789ABCDEFL, bitBuffer.readBits(64, ByteOrder.LittleEndian));
     }
 
+    @Test
     public void testReadBeyondEnd() {
         DefaultBitBuffer buffer = new DefaultBitBuffer(ByteBuffer
                 .wrap(new byte[]{1, 2, 3}));
@@ -161,6 +170,7 @@ public class DefaultBitBufferTest extends TestCase {
         }
     }
 
+    @Test
     public void testReadAsByteBuffer() throws Exception {
 
         DefaultBitBuffer buffer = new DefaultBitBuffer(ByteBuffer
@@ -181,6 +191,7 @@ public class DefaultBitBufferTest extends TestCase {
         assertEquals(10, buffer.readAsByte(8));
     }
 
+    @Test
     public void testReadAsByteBufferWithBitAlignments() throws Exception {
 
         DefaultBitBuffer buffer = new DefaultBitBuffer(ByteBuffer
@@ -215,6 +226,7 @@ public class DefaultBitBufferTest extends TestCase {
         return ByteBuffer.wrap(out.toByteArray());
     }
 
+    @Test
     public void testReadingIntegers() {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{0x01 // 0000 0001
                 , 0x02 // 0000 00010
@@ -246,6 +258,7 @@ public class DefaultBitBufferTest extends TestCase {
                 .readAsInt(3, 7, ByteOrder.BigEndian));
     }
 
+    @Test
     public void testReading1() {
         ByteBuffer buffer = ByteBuffer.wrap(new byte[]{0x00, 0x00, 0x00, 0x01});
         BitBuffer bitBuffer = new DefaultBitBuffer(buffer);

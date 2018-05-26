@@ -24,21 +24,14 @@
  */
 package org.codehaus.preon.codec;
 
-import java.lang.reflect.AnnotatedElement;
-
-import org.codehaus.preon.Builder;
-import org.codehaus.preon.Codec;
-import org.codehaus.preon.DecodingException;
-import org.codehaus.preon.Resolver;
-import org.codehaus.preon.ResolverContext;
+import org.codehaus.preon.*;
 import org.codehaus.preon.annotation.ByteAlign;
 import org.codehaus.preon.buffer.BitBuffer;
 
+import java.lang.reflect.AnnotatedElement;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ByteAligningDecoratorTest extends junit.framework.TestCase {
 
@@ -50,36 +43,34 @@ public class ByteAligningDecoratorTest extends junit.framework.TestCase {
     private ResolverContext context;
 
     public void setUp() {
-        codec = createMock(Codec.class);
-        metadata = createMock(AnnotatedElement.class);
-        buffer = createMock(BitBuffer.class);
-        resolver = createMock(Resolver.class);
-        context = createMock(ResolverContext.class);
+        codec = mock(Codec.class);
+        metadata = mock(AnnotatedElement.class);
+        buffer = mock(BitBuffer.class);
+        resolver = mock(Resolver.class);
+        context = mock(ResolverContext.class);
     }
 
     public void testAligningType() throws DecodingException {
         ByteAligningDecorator decorator = new ByteAligningDecorator();
-        expect(codec.decode(buffer, resolver, builder)).andReturn(new Object());
-        expect(buffer.getBitPos()).andReturn(12L).anyTimes();
+        when(codec.decode(buffer, resolver, builder)).thenReturn(new Object());
+        when(buffer.getBitPos()).thenReturn(12L);
         buffer.setBitPos(16L);
-        replay(codec, metadata, buffer, resolver, context);
+
         Codec decorated = decorator.decorate(codec, metadata, Test1.class, context);
         assertNotSame(decorated, codec);
         decorated.decode(buffer, resolver, builder);
-        verify(codec, metadata, buffer, resolver, context);
     }
 
     public void testAligningField() throws DecodingException {
         ByteAligningDecorator decorator = new ByteAligningDecorator();
-        expect(codec.decode(buffer, resolver, builder)).andReturn(new Object());
-        expect(buffer.getBitPos()).andReturn(12L).anyTimes();
-        expect(metadata.isAnnotationPresent(ByteAlign.class)).andReturn(true);
+        when(codec.decode(buffer, resolver, builder)).thenReturn(new Object());
+        when(buffer.getBitPos()).thenReturn(12L);
+        when(metadata.isAnnotationPresent(ByteAlign.class)).thenReturn(true);
         buffer.setBitPos(16L);
-        replay(codec, metadata, buffer, resolver, context);
+
         Codec decorated = decorator.decorate(codec, metadata, Test2.class, context);
         assertNotSame(decorated, codec);
         decorated.decode(buffer, resolver, builder);
-        verify(codec, metadata, buffer, resolver, context);
     }
 
 

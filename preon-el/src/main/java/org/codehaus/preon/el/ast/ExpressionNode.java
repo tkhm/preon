@@ -26,7 +26,6 @@ package org.codehaus.preon.el.ast;
 
 import java.util.Set;
 
-import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
@@ -59,38 +58,18 @@ public class ExpressionNode<T extends Comparable<T>, E> extends AbstractNode<T, 
         this.expression = expression;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.ast.Node#eval(java.lang.Object)
-     */
     public T eval(E context) {
         return expression.eval(context);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.ast.Node#gather(java.util.Set)
-     */
     public void gather(Set<Reference<E>> references) {
         references.addAll(expression.getReferences());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.ast.Node#getType()
-     */
     public Class<T> getType() {
         return expression.getType();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.ast.Node#simplify()
-     */
     public Node<T, E> simplify() {
         return new ExpressionNode<T, E>(expression.simplify());
     }
@@ -99,22 +78,7 @@ public class ExpressionNode<T extends Comparable<T>, E> extends AbstractNode<T, 
         return new ExpressionNode(expression.rescope(context));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Expression#isParameterized()
-     */
     public boolean isParameterized() {
         return expression.isParameterized();
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
-     */
-    public void document(Document target) {
-        expression.document(target);
-    }
-
 }

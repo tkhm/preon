@@ -25,7 +25,6 @@
 package org.codehaus.preon.codec;
 
 import org.codehaus.preon.*;
-import org.codehaus.preon.Codecs.DocumentType;
 import org.codehaus.preon.annotation.*;
 import org.codehaus.preon.annotation.Choices.Choice;
 import org.codehaus.preon.binding.BindingFactory;
@@ -38,7 +37,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -487,13 +485,13 @@ public class IntegrationTest {
         assertEquals("ab", value.values[0].value);
     }
 
-    @Test
+    /*@Test
     public void testReferencesPartiallyResolvable() throws DecodingException, IOException {
         Codec<Test45> codec = Codecs.create(Test45.class);
         File file = folder.newFile("test.html");
         Codecs.document(codec, DocumentType.Html, file);
         // TODO: Add some tests on the contents of this file.
-    }
+    }*/
 
     @Test
     public void testStaticReferences() throws DecodingException {

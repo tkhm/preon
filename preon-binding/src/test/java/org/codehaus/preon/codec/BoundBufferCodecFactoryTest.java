@@ -24,15 +24,6 @@
  */
 package org.codehaus.preon.codec;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.reflect.AnnotatedElement;
-
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.annotation.BoundBuffer;
 import org.codehaus.preon.channel.OutputStreamBitChannel;
@@ -41,6 +32,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.reflect.AnnotatedElement;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class BoundBufferCodecFactoryTest {
@@ -71,7 +70,7 @@ public class BoundBufferCodecFactoryTest {
         codec.encode(match, new OutputStreamBitChannel(out), null);
 
         byte[] output = out.toByteArray();
-        assertThat(output.length, is(match.length));
+        assertEquals(output.length, match.length);
         assertArrayEquals(match, output);
     }
 }

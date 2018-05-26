@@ -24,26 +24,21 @@
  */
 package org.codehaus.preon.codec;
 
-import static org.easymock.EasyMock.*;
+import org.codehaus.preon.*;
+import org.codehaus.preon.annotation.TypePrefix;
+import org.codehaus.preon.buffer.BitBuffer;
+import org.codehaus.preon.buffer.ByteOrder;
+import org.codehaus.preon.el.Reference;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.preon.buffer.ByteOrder;
-import org.codehaus.preon.el.Reference;
-import org.codehaus.preon.Codec;
-import org.codehaus.preon.CodecSelector;
-import org.codehaus.preon.CodecSelectorFactory;
-import org.codehaus.preon.DecodingException;
-import org.codehaus.preon.Resolver;
-import org.codehaus.preon.ResolverContext;
-import org.codehaus.preon.annotation.TypePrefix;
-import org.codehaus.preon.buffer.BitBuffer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-
-import junit.framework.TestCase;
-
-public class TypePrefixSelectorFactoryTest extends TestCase {
+public class TypePrefixSelectorFactoryTest {
 
     private ResolverContext context;
 
@@ -57,45 +52,46 @@ public class TypePrefixSelectorFactoryTest extends TestCase {
 
     private Reference<Resolver> reference;
 
+    @Before
     @SuppressWarnings("unchecked")
     public void setUp() {
-        context = createMock(ResolverContext.class);
-        codec1 = createMock(Codec.class);
-        codec2 = createMock(Codec.class);
-        resolver = createMock(Resolver.class);
-        bitBuffer = createMock(BitBuffer.class);
-        reference = createMock(Reference.class);
+        context = mock(ResolverContext.class);
+        codec1 = mock(Codec.class);
+        codec2 = mock(Codec.class);
+        resolver = mock(Resolver.class);
+        bitBuffer = mock(BitBuffer.class);
+        reference = mock(Reference.class);
     }
 
+    @Test
     public void testSimplePrefixes() throws DecodingException {
-        expect(codec1.getTypes()).andReturn(new Class<?>[]{Test1.class});
-        expect(codec2.getTypes()).andReturn(new Class<?>[]{Test2.class});
-        expect(bitBuffer.readAsLong(8, ByteOrder.LittleEndian)).andReturn(1L);
-        replay(context, codec1, codec2, resolver, bitBuffer);
+        when(codec1.getTypes()).thenReturn(new Class<?>[]{Test1.class});
+        when(codec2.getTypes()).thenReturn(new Class<?>[]{Test2.class});
+        when(bitBuffer.readAsLong(8, ByteOrder.LittleEndian)).thenReturn(1L);
+
         CodecSelectorFactory factory = new TypePrefixSelectorFactory();
         List<Codec<?>> codecs = new ArrayList<Codec<?>>();
         codecs.add(codec1);
         codecs.add(codec2);
         CodecSelector selector = factory.create(context, codecs);
         selector.select(bitBuffer, resolver);
-        verify(context, codec1, codec2, resolver, bitBuffer);
     }
 
+    @Test
     public void testPrefixesWithReferences() throws DecodingException {
-        expect(codec1.getTypes()).andReturn(new Class<?>[]{Test3.class});
-        expect(codec2.getTypes()).andReturn(new Class<?>[]{Test4.class});
-        expect(context.selectAttribute("p")).andReturn(reference);
-        expect(bitBuffer.readAsLong(8, ByteOrder.LittleEndian)).andReturn(1L);
-        expect(reference.resolve(resolver)).andReturn(-2);
-        expect(reference.getType()).andReturn((Class) Integer.class).anyTimes();
-        replay(context, codec1, codec2, resolver, bitBuffer, reference);
+        when(codec1.getTypes()).thenReturn(new Class<?>[]{Test3.class});
+        when(codec2.getTypes()).thenReturn(new Class<?>[]{Test4.class});
+        when(context.selectAttribute("p")).thenReturn(reference);
+        when(bitBuffer.readAsLong(8, ByteOrder.LittleEndian)).thenReturn(1L);
+        when(reference.resolve(resolver)).thenReturn(-2);
+        when(reference.getType()).thenReturn((Class) Integer.class);
+
         CodecSelectorFactory factory = new TypePrefixSelectorFactory();
         List<Codec<?>> codecs = new ArrayList<Codec<?>>();
         codecs.add(codec1);
         codecs.add(codec2);
         CodecSelector selector = factory.create(context, codecs);
         selector.select(bitBuffer, resolver);
-        verify(context, codec1, codec2, resolver, bitBuffer, reference);
     }
 
     @TypePrefix(value = "1", size = 8)

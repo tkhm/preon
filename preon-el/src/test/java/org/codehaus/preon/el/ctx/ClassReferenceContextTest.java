@@ -25,11 +25,10 @@
 package org.codehaus.preon.el.ctx;
 
 import org.codehaus.preon.el.*;
-import org.codehaus.preon.el.util.StringBuilderDocument;
-import static org.junit.Assert.*;
 import org.junit.Test;
 
 import static org.codehaus.preon.el.Bindings.EarlyBinding;
+import static org.junit.Assert.assertEquals;
 
 public class ClassReferenceContextTest {
 
@@ -59,9 +58,6 @@ public class ClassReferenceContextTest {
         assertEquals("Levi", personsName.resolve(levi));
         assertEquals("Wilfred", fathersName.resolve(levi));
         assertEquals("Wilfred", personsName.resolve(wilfred));
-        StringBuilder builder = new StringBuilder();
-        fathersName.document(new StringBuilderDocument(builder));
-        System.out.println(builder.toString());
     }
 
     @Test(expected=BindingException.class)

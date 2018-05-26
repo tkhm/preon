@@ -24,17 +24,15 @@
  */
 package org.codehaus.preon.codec;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.codehaus.preon.el.*;
-import org.codehaus.preon.el.ctx.MultiReference;
-import org.codehaus.preon.el.util.StringBuilderDocument;
 import org.codehaus.preon.Resolver;
 import org.codehaus.preon.ResolverContext;
 import org.codehaus.preon.binding.Binding;
-import org.codehaus.preon.util.ParaContentsDocument;
+import org.codehaus.preon.el.*;
+import org.codehaus.preon.el.ctx.MultiReference;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * A {@link ResolverContext} based on a collection of {@link Binding Bindings}.
@@ -98,69 +96,17 @@ public class BindingsContext implements ObjectResolverContext {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.ReferenceContext#selectItem(java.lang.String)
-     */
-
     public Reference<Resolver> selectItem(String index) throws BindingException {
         throw new BindingException("Cannot resolve index on BindingContext.");
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.codehaus.preon.el.ReferenceContext#selectItem(org.codehaus.preon.el.Expression)
-     */
-
-    public Reference<Resolver> selectItem(Expression<Integer, Resolver> index)
-            throws BindingException {
-        StringBuilder builder = new StringBuilder();
-        index.document(new StringBuilderDocument(builder));
+    public Reference<Resolver> selectItem(Expression<Integer, Resolver> index) throws BindingException {
         throw new BindingException("Cannot resolve index on BindingContext.");
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
-     */
-
-    public void document(Document target) {
-        if (bindingsByName.size() > 0) {
-            target.text("one of ");
-            boolean passedFirst = false;
-            for (Binding binding : bindingsByName.values()) {
-                if (passedFirst) {
-                    target.text(", ");
-                }
-                target.text(binding.getName());
-                passedFirst = true;
-            }
-        } else {
-            target.text("no variables");
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.codehaus.preon.el.ObjectResolverContext#getResolver(java.lang.Object
-     * , org.codehaus.preon.Resolver)
-     */
 
     public Resolver getResolver(Object context, Resolver resolver) {
         return new BindingsResolver(context, resolver);
     }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.codehaus.preon.el.ObjectResolverContext#getBindings()
-     */
 
     public List<Binding> getBindings() {
         return orderedBindings;
@@ -298,22 +244,6 @@ public class BindingsContext implements ObjectResolverContext {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
-         */
-
-        public void document(final Document target) {
-            binding.writeReference(new ParaContentsDocument(target));
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.codehaus.preon.el.Reference#getType()
-         */
-
         public Class<?> getType() {
             return commonType;
         }
@@ -379,12 +309,7 @@ public class BindingsContext implements ObjectResolverContext {
                     Binding binding = bindingsByName.get(name);
 
                     if (context == null) {
-                        StringBuilderDocument document = new StringBuilderDocument();
-                        // TODO:
-//                        binding.describe(new ParaContentsDocument(document));
-                        throw new BindingException("Failed to resolve "
-                                + document.toString()
-                                + " due to incomplete context.");
+                        throw new BindingException("Failed to resolve ADD_LABEL_HERE due to incomplete context.");
                     }
 
                     try {

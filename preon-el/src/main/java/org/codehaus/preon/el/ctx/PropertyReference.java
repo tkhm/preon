@@ -24,15 +24,9 @@
  */
 package org.codehaus.preon.el.ctx;
 
-import java.lang.reflect.Field;
+import org.codehaus.preon.el.*;
 
-import org.codehaus.preon.el.BindingException;
-import org.codehaus.preon.el.Document;
-import org.codehaus.preon.el.Expression;
-import org.codehaus.preon.el.Expressions;
-import org.codehaus.preon.el.InvalidExpressionException;
-import org.codehaus.preon.el.Reference;
-import org.codehaus.preon.el.ReferenceContext;
+import java.lang.reflect.Field;
 
 public class PropertyReference<T> implements Reference<T> {
 
@@ -122,20 +116,6 @@ public class PropertyReference<T> implements Reference<T> {
 
     public boolean equals(PropertyReference<T> other) {
         return field.equals(other.field) && reference.equals(other.reference);
-    }
-
-    public void document(Document target) {
-        target.text("the " + field.getName());
-        if (includeType) {
-            target.text(" (a ");
-            target.text(getType().getSimpleName());
-            target.text(") ");
-        } else {
-            target.text(" ");
-        }
-        target.text("of ");
-        reference.document(target);
-
     }
 
     public ReferenceContext<T> getReferenceContext() {

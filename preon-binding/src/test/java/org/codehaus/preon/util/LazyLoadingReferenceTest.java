@@ -24,18 +24,19 @@
  */
 package org.codehaus.preon.util;
 
-import java.util.concurrent.ExecutionException;
-
-import org.codehaus.preon.util.LazyLoadingReference.Loader;
-
-
-import edu.emory.mathcs.backport.java.util.concurrent.atomic.AtomicInteger;
 import edu.umd.cs.mtc.MultithreadedTest;
 import edu.umd.cs.mtc.TestFramework;
-import junit.framework.TestCase;
+import org.codehaus.preon.util.LazyLoadingReference.Loader;
+import org.junit.Test;
 
-public class LazyLoadingReferenceTest extends TestCase {
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertEquals;
+
+public class LazyLoadingReferenceTest {
+
+    @Test
     public void testLoading() throws InterruptedException, ExecutionException {
         LazyLoadingReference<String> reference = new LazyLoadingReference<String>(
                 new LazyLoadingReference.Loader<String>() {
@@ -48,6 +49,7 @@ public class LazyLoadingReferenceTest extends TestCase {
         assertEquals("abc", reference.get());
     }
 
+    @Test
     public void testConcurrentAccess() throws Throwable {
         TestFramework.runManyTimes(new ConcurrentTest(), 100);
     }

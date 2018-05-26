@@ -24,31 +24,32 @@
  */
 package org.codehaus.preon.codec;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.nio.ByteBuffer;
-
-import org.codehaus.preon.el.Expressions;
-import org.codehaus.preon.Builder;
-import org.codehaus.preon.Codec;
-import org.codehaus.preon.CodecFactory;
-import org.codehaus.preon.DecodingException;
-import org.codehaus.preon.Resolver;
-import org.codehaus.preon.ResolverContext;
+import junit.framework.TestCase;
+import org.codehaus.preon.*;
 import org.codehaus.preon.annotation.Choices;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.ByteOrder;
 import org.codehaus.preon.buffer.DefaultBitBuffer;
-import junit.framework.TestCase;
+import org.codehaus.preon.el.Expressions;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Matchers;
 
-import static org.easymock.EasyMock.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.nio.ByteBuffer;
+
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 /**
  * A collection of tests for the {@link SelectFromCodec}.
  *
  * @author Wilfred Springer (wis)
  */
-public class SelectFromCodecTest extends TestCase {
+public class SelectFromCodecTest {
 
     private Choices choices;
 
@@ -68,15 +69,16 @@ public class SelectFromCodecTest extends TestCase {
 
     private Builder builder;
 
+    @Before
     public void setUp() {
-        context = createMock(ResolverContext.class);
-        codecFactory = createMock(CodecFactory.class);
-        metadata = createMock(AnnotatedElement.class);
-        floatCodec = createMock(Codec.class);
-        integerCodec = createMock(Codec.class);
-        shortCodec = createMock(Codec.class);
-        resolver = createMock(Resolver.class);
-        builder = createMock(Builder.class);
+        context = mock(ResolverContext.class);
+        codecFactory = mock(CodecFactory.class);
+        metadata = mock(AnnotatedElement.class);
+        floatCodec = mock(Codec.class);
+        integerCodec = mock(Codec.class);
+        shortCodec = mock(Codec.class);
+        resolver = mock(Resolver.class);
+        builder = mock(Builder.class);
         choices = new Choices() {
 
             public Choice[] alternatives() {
@@ -130,28 +132,21 @@ public class SelectFromCodecTest extends TestCase {
         };
     }
 
+    @Test
     public void testSelectFrom() throws DecodingException {
         BitBuffer buffer = new DefaultBitBuffer(ByteBuffer.wrap(new byte[]{0, 1, (byte) 255,
                 (byte) 255, (byte) 255, (byte) 255}));
 
         // We expect all Codecs to be constructed
-        expect(codecFactory.create(null, Float.class, context)).andReturn(floatCodec);
-        expect(
-                codecFactory.create((AnnotatedElement) isNull(), eq(Integer.class),
-                        isA(ResolverContext.class))).andReturn(integerCodec);
-        expect(
-                codecFactory.create((AnnotatedElement) isNull(), eq(Short.class),
-                        isA(ResolverContext.class))).andReturn(shortCodec);
-        expect(integerCodec.decode(buffer, resolver, builder)).andReturn(new Integer(3));
-        expect(integerCodec.getSize()).andReturn(Expressions.createInteger(32, Resolver.class));
-        expect(shortCodec.getSize()).andReturn(Expressions.createInteger(16, Resolver.class));
-        expect(shortCodec.decode(buffer, resolver, builder)).andReturn(new Short((short) 5));
+        when(codecFactory.create(null, Float.class, context)).thenReturn(floatCodec);
+        when(codecFactory.create(eq(null), eq(Integer.class), any(ResolverContext.class))).thenReturn(integerCodec);
+        when(codecFactory.create(eq(null), eq(Short.class), any(ResolverContext.class))).thenReturn(shortCodec);
+        when(integerCodec.decode(buffer, resolver, builder)).thenReturn(new Integer(3));
+        when(integerCodec.getSize()).thenReturn(Expressions.createInteger(32, Resolver.class));
+        when(shortCodec.getSize()).thenReturn(Expressions.createInteger(16, Resolver.class));
+        when(shortCodec.decode(buffer, resolver, builder)).thenReturn(new Short((short) 5));
 
-        // Replay
-        replay(codecFactory, context, metadata, shortCodec, integerCodec, floatCodec, resolver,
-                builder);
-        SelectFromCodec codec = new SelectFromCodec(Number.class, choices, context, codecFactory,
-                metadata);
+        SelectFromCodec codec = new SelectFromCodec(Number.class, choices, context, codecFactory, metadata);
 
         // If we can potentially decode a Float, as well as an Integer, or a Short, then we cannot really predict the size.
         assertNull(codec.getSize());
@@ -165,9 +160,5 @@ public class SelectFromCodecTest extends TestCase {
         value = codec.decode(buffer, resolver, builder);
         assertNotNull(value);
         assertEquals(5, ((Short) value).intValue());
-
-        // Verify
-        verify(codecFactory, context, metadata, shortCodec, integerCodec, floatCodec, resolver,
-                builder);
     }
 }

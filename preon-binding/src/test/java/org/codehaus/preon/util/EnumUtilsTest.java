@@ -24,13 +24,17 @@
  */
 package org.codehaus.preon.util;
 
-import java.util.Map;
-
 import junit.framework.TestCase;
 import org.codehaus.preon.annotation.BoundEnumOption;
+import org.junit.Test;
 
-public class EnumUtilsTest extends TestCase {
+import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+
+public class EnumUtilsTest {
+
+    @Test
     public void testFullyDefinedEnum() {
         Map<Long, Direction> index = EnumUtils.getBoundEnumOptionIndex(Direction.class);
         assertEquals(Direction.Left, index.get(1L));
@@ -38,6 +42,7 @@ public class EnumUtilsTest extends TestCase {
         assertEquals(null, index.get(3L));
     }
 
+    @Test
     public void testPartlyDefinedEnum() {
         Map<Long, Hours> index = EnumUtils.getBoundEnumOptionIndex(Hours.class);
         assertEquals(Hours.Working, index.get(1L));

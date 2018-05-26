@@ -31,16 +31,15 @@ import org.codehaus.preon.annotation.Choices;
 import org.codehaus.preon.annotation.TypePrefix;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.ByteOrder;
-import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.AnnotatedElement;
 
 import static junit.framework.Assert.fail;
-import static org.easymock.EasyMock.*;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
 public class ObjectCodecFactoryTest {
 
@@ -60,38 +59,34 @@ public class ObjectCodecFactoryTest {
 
     @Before
     public void setUp() {
-        metadata = createMock(AnnotatedElement.class);
-        delegate = createMock(CodecFactory.class);
-        buffer = createMock(BitBuffer.class);
-        resolver = createMock(Resolver.class);
-        settings = createMock(BoundObject.class);
-        builder = createMock(Builder.class);
-        choices = createMock(Choices.class);
+        metadata = mock(AnnotatedElement.class);
+        delegate = mock(CodecFactory.class);
+        buffer = mock(BitBuffer.class);
+        resolver = mock(Resolver.class);
+        settings = mock(BoundObject.class);
+        builder = mock(Builder.class);
+        choices = mock(Choices.class);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testBoundObjectNoMembersTwoTypesNoPrefix() throws DecodingException {
-        Codec codec1 = createMock(Codec.class);
-        Codec codec2 = createMock(Codec.class);
-        expect(metadata.isAnnotationPresent(Bound.class)).andReturn(false).anyTimes();
-        expect(metadata.isAnnotationPresent(BoundObject.class)).andReturn(true).anyTimes();
-        expect(metadata.getAnnotation(BoundObject.class)).andReturn(settings);
-        expect(settings.selectFrom()).andReturn(choices).times(2);
-        expect(choices.alternatives()).andReturn(new Choices.Choice[0]);
-        expect(choices.defaultType()).andReturn((Class) Void.class);
-        expect(settings.type()).andReturn((Class) Void.class);
-        expect(settings.types()).andReturn(new Class[]{TestObject1.class, TestObject2.class})
-                .times(2);
-        expect(
-                delegate.create((AnnotatedElement) EasyMock.isNull(), EasyMock.isA(Class.class),
-                        (ResolverContext) EasyMock.isNull())).andReturn(codec1);
-        expect(codec1.getTypes()).andReturn(new Class[]{TestObject1.class});
-        expect(codec2.getTypes()).andReturn(new Class[]{TestObject2.class});
-        expect(
-                delegate.create((AnnotatedElement) EasyMock.isNull(), EasyMock.isA(Class.class),
-                        (ResolverContext) EasyMock.isNull())).andReturn(codec2);
-        replay(metadata, delegate, buffer, resolver, settings, codec1, codec2, choices);
+        Codec codec1 = mock(Codec.class);
+        Codec codec2 = mock(Codec.class);
+        when(metadata.isAnnotationPresent(Bound.class)).thenReturn(false);
+        when(metadata.isAnnotationPresent(BoundObject.class)).thenReturn(true);
+        when(metadata.getAnnotation(BoundObject.class)).thenReturn(settings);
+        when(settings.selectFrom()).thenReturn(choices);
+        when(choices.alternatives()).thenReturn(new Choices.Choice[0]);
+        when(choices.defaultType()).thenReturn((Class) Void.class);
+        when(settings.type()).thenReturn((Class) Void.class);
+        when(settings.types()).thenReturn(new Class[]{TestObject1.class, TestObject2.class});
+        when(delegate.create((AnnotatedElement) isNull(), isA(Class.class), (ResolverContext) isNull())).thenReturn(codec1);
+        when(codec1.getTypes()).thenReturn(new Class[]{TestObject1.class});
+        when(codec2.getTypes()).thenReturn(new Class[]{TestObject2.class});
+        when(
+                delegate.create((AnnotatedElement) isNull(), isA(Class.class),
+                        (ResolverContext) isNull())).thenReturn(codec2);
         ObjectCodecFactory factory = new ObjectCodecFactory(delegate);
         try {
             Codec<TestObject1> created = factory.create(metadata, TestObject1.class, null);
@@ -99,32 +94,29 @@ public class ObjectCodecFactoryTest {
         } catch (CodecConstructionException cce) {
             // What we expect.
         }
-        verify(metadata, delegate, buffer, resolver, settings, choices);
     }
 
     @Test
     public void testBoundObjectNoMembersTwoTypesWithPrefix() throws DecodingException {
-        Codec codecTest3 = createMock(Codec.class);
-        Codec codecTest4 = createMock(Codec.class);
-        expect(metadata.isAnnotationPresent(Bound.class)).andReturn(false).anyTimes();
-        expect(metadata.isAnnotationPresent(BoundObject.class)).andReturn(true).anyTimes();
-        expect(settings.selectFrom()).andReturn(choices).times(2);
-        expect(choices.alternatives()).andReturn(new Choices.Choice[0]);
-        expect(choices.defaultType()).andReturn((Class) Void.class);
-        expect(metadata.getAnnotation(BoundObject.class)).andReturn(settings);
-        expect(settings.type()).andReturn((Class) Void.class);
-        expect(settings.types()).andReturn(new Class[]{TestObject3.class, TestObject4.class})
-                .times(2);
-        expect(delegate.create(null, TestObject3.class, null)).andReturn(codecTest3);
-        expect(codecTest3.getTypes()).andReturn(new Class<?>[]{TestObject3.class});
-        expect(codecTest4.getTypes()).andReturn(new Class<?>[]{TestObject4.class});
-        expect(delegate.create(null, TestObject4.class, null)).andReturn(codecTest4);
-        // expect(codecTest3.getSize(resolver)).andReturn(6);
-        // expect(codecTest4.getSize(resolver)).andReturn(6);
-        expect(buffer.readAsLong(8, ByteOrder.LittleEndian)).andReturn(0L);
-        expect(codecTest3.decode(buffer, resolver, builder)).andReturn(new TestObject3());
-        replay(metadata, delegate, buffer, resolver, settings, codecTest3, codecTest4, builder,
-                choices);
+        Codec codecTest3 = mock(Codec.class);
+        Codec codecTest4 = mock(Codec.class);
+        when(metadata.isAnnotationPresent(Bound.class)).thenReturn(false);
+        when(metadata.isAnnotationPresent(BoundObject.class)).thenReturn(true);
+        when(settings.selectFrom()).thenReturn(choices);
+        when(choices.alternatives()).thenReturn(new Choices.Choice[0]);
+        when(choices.defaultType()).thenReturn((Class) Void.class);
+        when(metadata.getAnnotation(BoundObject.class)).thenReturn(settings);
+        when(settings.type()).thenReturn((Class) Void.class);
+        when(settings.types()).thenReturn(new Class[]{TestObject3.class, TestObject4.class});
+        when(delegate.create(null, TestObject3.class, null)).thenReturn(codecTest3);
+        when(codecTest3.getTypes()).thenReturn(new Class<?>[]{TestObject3.class});
+        when(codecTest4.getTypes()).thenReturn(new Class<?>[]{TestObject4.class});
+        when(delegate.create(null, TestObject4.class, null)).thenReturn(codecTest4);
+        // when(codecTest3.getSize(resolver)).thenReturn(6);
+        // when(codecTest4.getSize(resolver)).thenReturn(6);
+        when(buffer.readAsLong(8, ByteOrder.LittleEndian)).thenReturn(0L);
+        when(codecTest3.decode(buffer, resolver, builder)).thenReturn(new TestObject3());
+
         ObjectCodecFactory factory = new ObjectCodecFactory(delegate);
         Codec<TestObject1> codec = factory.create(metadata, TestObject1.class, null);
         assertNotNull(codec);
@@ -132,8 +124,6 @@ public class ObjectCodecFactoryTest {
         assertNotNull(result);
         assertTrue(!(result instanceof TestObject4));
         assertTrue(result instanceof TestObject3);
-        verify(metadata, delegate, buffer, resolver, settings, codecTest3, codecTest4, builder,
-                choices);
     }
 
     public static class TestObject1 {

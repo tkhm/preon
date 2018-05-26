@@ -24,14 +24,14 @@
  */
 package org.codehaus.preon.binding;
 
-import java.lang.reflect.Field;
-
 import org.codehaus.preon.Codec;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.lang.reflect.Field;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StandardBindingFactoryTest {
@@ -57,7 +57,7 @@ public class StandardBindingFactoryTest {
     @Test
     public void shouldHaveAccessToNonPublicFields() throws Exception {
         Field field = Spam.class.getDeclaredField("eggs");
-        Binding binding = factory.create(null, field, codec, null, null);
+        Binding binding = factory.create(null, field, codec, null);
         binding.save(new Spam(), null, null);
     }
 }

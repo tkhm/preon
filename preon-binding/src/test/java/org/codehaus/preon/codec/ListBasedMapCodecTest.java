@@ -42,7 +42,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasEntry;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,17 +70,18 @@ public class ListBasedMapCodecTest {
 
     @Test
     public void shouldWorkWithNormalList() throws DecodingException {
-        when(listCodec.decode(any(BitBuffer.class), any(Resolver.class), any(Builder.class)))
-                .thenReturn(Arrays.asList(item1, item2));
+        when(listCodec.decode(any(BitBuffer.class), any(Resolver.class), any(Builder.class))).thenReturn(Arrays.asList(item1, item2));
         when(item1.getKey()).thenReturn("foo");
         when(item1.getValue()).thenReturn(1);
         when(item2.getKey()).thenReturn("bar");
         when(item2.getValue()).thenReturn(2);
-        ListBasedMapCodec<String,Integer> codec = new ListBasedMapCodec<String, Integer>(listCodec);
+        ListBasedMapCodec<String,Integer> codec = new ListBasedMapCodec<>(listCodec);
+
         Map<String, Integer> map = codec.decode(buffer, resolver, builder);
-        assertThat(map.size(), is(2));
-        assertThat(map, hasEntry("foo", 1));
-        assertThat(map, hasEntry("bar", 2));
+        assertEquals(2, map.size());
+        assertEquals(new Integer(1), map.get("foo"));
+        assertEquals(new Integer(2), map.get("bar"));
+
         verify(listCodec).decode(buffer, resolver, builder);
         Mockito.verifyNoMoreInteractions(listCodec);        
     }

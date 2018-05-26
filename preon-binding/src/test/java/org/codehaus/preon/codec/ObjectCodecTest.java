@@ -34,14 +34,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.io.IOException;
+
+import static org.mockito.Mockito.*;
 
 @RunWith(org.mockito.runners.MockitoJUnitRunner.class)
 public class ObjectCodecTest {

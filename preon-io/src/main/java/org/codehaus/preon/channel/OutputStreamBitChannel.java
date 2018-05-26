@@ -26,9 +26,6 @@ package org.codehaus.preon.channel;
 
 import org.codehaus.preon.buffer.ByteOrder;
 
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -36,8 +33,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
-/** A {@link BitChannel} that wraps an {@link java.io.OutputStream}. */
-@NotThreadSafe
+/**
+ * A {@link BitChannel} that wraps an {@link java.io.OutputStream}.
+ *
+ * <p>This class is not threadsafe!</p>
+ */
 public class OutputStreamBitChannel implements BitChannel, Closeable {
 
     private static final byte[] MASK_UPPER = new byte[]{
@@ -61,7 +61,7 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
     private byte buffer;
 
     /** Constructs a new instance, accepting the {@link OutputStream} to wrap. */
-    public OutputStreamBitChannel(@Nonnull OutputStream out) {
+    public OutputStreamBitChannel(OutputStream out) {
         this.out = out;
     }
 
@@ -78,7 +78,7 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         }
     }
 
-    public void write(@Nonnegative int nrbits, byte value) throws IOException {
+    public void write(int nrbits, byte value) throws IOException {
         assert nrbits > 0;
         assert nrbits <= 8;
 
@@ -109,7 +109,7 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         }
     }
 
-    public void write(@Nonnegative int nrbits, int value, ByteOrder byteOrder)
+    public void write(int nrbits, int value, ByteOrder byteOrder)
             throws IOException {
         int steps = nrbits / 8;
         int remainder = nrbits % 8;
@@ -131,7 +131,7 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         }
     }
 
-    public void write(@Nonnegative int nrbits, long value, ByteOrder byteOrder)
+    public void write(int nrbits, long value, ByteOrder byteOrder)
             throws IOException {
         int steps = nrbits / 8;
         int remainder = nrbits % 8;
@@ -153,7 +153,7 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         }
     }
 
-    public void write(@Nonnegative int nrbits, short value, ByteOrder byteOrder)
+    public void write(int nrbits, short value, ByteOrder byteOrder)
             throws IOException {
         int steps = nrbits / 8;
         int remainder = nrbits % 8;
@@ -175,13 +175,13 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         }
     }
 
-    public void write(@Nonnull byte[] src, int offset, int length) throws IOException {
+    public void write(byte[] src, int offset, int length) throws IOException {
         for (int i = 0; i < length; i++) {
             write(8, src[offset + i]);
         }
     }
 
-    public long write(@Nonnull ByteBuffer buffer) throws IOException {
+    public long write(ByteBuffer buffer) throws IOException {
         WritableByteChannel channel = null;
         try {
             channel = Channels.newChannel(out);
@@ -191,9 +191,7 @@ public class OutputStreamBitChannel implements BitChannel, Closeable {
         }
     }
 
-    public
-    @Nonnegative
-    int getRelativeBitPos() {
+    public int getRelativeBitPos() {
         return bitPos;
     }
 

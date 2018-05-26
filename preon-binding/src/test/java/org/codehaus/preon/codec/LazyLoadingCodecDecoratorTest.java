@@ -24,24 +24,23 @@
  */
 package org.codehaus.preon.codec;
 
-import java.lang.reflect.AnnotatedElement;
-
-import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.DecodingException;
 import org.codehaus.preon.Resolver;
 import org.codehaus.preon.annotation.LazyLoading;
 import org.codehaus.preon.buffer.BitBuffer;
+import org.codehaus.preon.el.Expression;
+import org.junit.Before;
+import org.junit.Test;
 
-import junit.framework.TestCase;
+import java.lang.reflect.AnnotatedElement;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import static org.easymock.EasyMock.createMock;
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.replay;
-import static org.easymock.EasyMock.verify;
-
-public class LazyLoadingCodecDecoratorTest extends TestCase {
+public class LazyLoadingCodecDecoratorTest {
 
     private Codec wrapped;
 
@@ -57,48 +56,46 @@ public class LazyLoadingCodecDecoratorTest extends TestCase {
 
     private Expression<Integer, Resolver> sizeExpr;
 
+    @Before
     public void setUp() {
-        wrapped = createMock(Codec.class);
-        buffer = createMock(BitBuffer.class);
+        wrapped = mock(Codec.class);
+        buffer = mock(BitBuffer.class);
         factory = new LazyLoadingCodecDecorator();
-        metadata = createMock(AnnotatedElement.class);
-        annotation = createMock(LazyLoading.class);
-        resolver = createMock(Resolver.class);
-        sizeExpr = createMock(Expression.class);
+        metadata = mock(AnnotatedElement.class);
+        annotation = mock(LazyLoading.class);
+        resolver = mock(Resolver.class);
+        sizeExpr = mock(Expression.class);
     }
 
+    @Test
     @SuppressWarnings("unchecked")
     public void testHappyPath() throws DecodingException {
 
-        Test test = new Test();
+        TestSubject test = new TestSubject();
 
         // Stuff expected when Codec is getting constructed
-        expect(metadata.isAnnotationPresent(LazyLoading.class))
-                .andReturn(true);
-        expect(wrapped.getSize()).andReturn(sizeExpr);
-        expect(sizeExpr.eval(resolver)).andReturn(32);
+        when(metadata.isAnnotationPresent(LazyLoading.class)).thenReturn(true);
+        when(wrapped.getSize()).thenReturn(sizeExpr);
+        when(sizeExpr.eval(resolver)).thenReturn(32);
 
         // Stuff expected when Test instance is constructed using Codec
-        expect(buffer.getBitPos()).andReturn(64L);
+        when(buffer.getBitPos()).thenReturn(64L);
         buffer.setBitPos(64L + 32);
 
         // Stuff expected after when Test instance is accessed
         buffer.setBitPos(64L);
-        expect(wrapped.decode(buffer, resolver, null)).andReturn(test);
+        when(wrapped.decode(buffer, resolver, null)).thenReturn(test);
 
-        // Replay
-        replay(wrapped, buffer, metadata, annotation, resolver, sizeExpr);
-        Codec<Test> codec = factory.decorate(wrapped, metadata, Test.class, null);
+        Codec<TestSubject> codec = factory.decorate(wrapped, metadata, TestSubject.class, null);
         assertNotNull(codec);
-        Test result = codec.decode(buffer, resolver, null);
+        TestSubject result = codec.decode(buffer, resolver, null);
         assertNotNull(result);
         assertEquals("bar", result.getFoo());
         // Second time should not cause reload.
         assertEquals("bar", result.getFoo());
-        verify(wrapped, buffer, metadata, annotation, resolver, sizeExpr);
     }
 
-    public static class Test {
+    public static class TestSubject {
 
         public String getFoo() {
             return "bar";

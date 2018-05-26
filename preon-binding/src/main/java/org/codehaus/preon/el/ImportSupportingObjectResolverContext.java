@@ -24,19 +24,14 @@
  */
 package org.codehaus.preon.el;
 
+import org.codehaus.preon.Resolver;
+import org.codehaus.preon.binding.Binding;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.codehaus.preon.el.BindingException;
-import org.codehaus.preon.el.Document;
-import org.codehaus.preon.el.Expression;
-import org.codehaus.preon.el.Reference;
-import org.codehaus.preon.el.ReferenceContext;
-import org.codehaus.preon.Resolver;
-import org.codehaus.preon.binding.Binding;
 
 public class ImportSupportingObjectResolverContext implements
         ObjectResolverContext {
@@ -73,10 +68,6 @@ public class ImportSupportingObjectResolverContext implements
     public Reference<Resolver> selectItem(Expression<Integer, Resolver> expr)
             throws BindingException {
         throw new BindingException("No indexes supported.");
-    }
-
-    public void document(Document doc) {
-        // Not expected to be called
     }
 
     public static ObjectResolverContext decorate(ObjectResolverContext context,
@@ -172,12 +163,6 @@ public class ImportSupportingObjectResolverContext implements
             throw new BindingException("No indexed values on class "
                     + imported.getSimpleName());
         }
-
-        public void document(Document document) {
-            // Not expected to be called
-            assert false;
-        }
-
     }
 
     private static class StaticFieldReference implements Reference<Resolver> {
@@ -242,11 +227,6 @@ public class ImportSupportingObjectResolverContext implements
                 throws BindingException {
             throw new BindingException("No indexes supported.");
         }
-
-        public void document(Document doc) {
-            doc.text(fld.getName());
-        }
-
     }
 
 }

@@ -32,8 +32,6 @@ import org.codehaus.preon.binding.BindingFactory;
 import org.codehaus.preon.binding.StandardBindingFactory;
 import org.codehaus.preon.el.ImportSupportingObjectResolverContext;
 import org.codehaus.preon.el.ObjectResolverContext;
-import org.codehaus.preon.rendering.ClassNameRewriter;
-import org.codehaus.preon.rendering.IdentifierRewriter;
 import org.codehaus.preon.util.HidingAnnotatedElement;
 
 import java.lang.reflect.AnnotatedElement;
@@ -53,9 +51,6 @@ public class ObjectCodecFactory implements CodecFactory {
      * have coverage for all fields defined.)
      */
     private CodecFactory codecFactory;
-
-    /** The object used to turn Java identifiers into something that is potentially readable by humans. */
-    private IdentifierRewriter rewriter = new ClassNameRewriter();
 
     /**
      * Constructs a new instance, using a default mechanism for constructing {@link org.codehaus.preon.binding.Binding}
@@ -119,7 +114,7 @@ public class ObjectCodecFactory implements CodecFactory {
         if (passThroughContext.getBindings().size() == 0) {
             throw new CodecConstructionException("Failed to find a single bound field on " + type.getName());
         }
-        ObjectCodec<T> result = new ObjectCodec<T>(type, rewriter, passThroughContext);
+        ObjectCodec<T> result = new ObjectCodec<T>(type, passThroughContext);
         return result;
     }
 

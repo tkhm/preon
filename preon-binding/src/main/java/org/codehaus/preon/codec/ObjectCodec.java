@@ -34,7 +34,6 @@ import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.el.Expressions;
 import org.codehaus.preon.el.ObjectResolverContext;
-import org.codehaus.preon.rendering.IdentifierRewriter;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,17 +48,17 @@ public class ObjectCodec<T> implements Codec<T> {
 
     private final Class<T> type;
 
-    private final IdentifierRewriter rewriter;
-
     private final ObjectResolverContext context;
 
-    public ObjectCodec(Class<T> type, IdentifierRewriter rewriter,
-                       ObjectResolverContext context) {
+    /**
+     *
+     * @param type
+     * @param context
+     */
+    public ObjectCodec(Class<T> type, ObjectResolverContext context) {
         assert type != null;
-        assert rewriter != null;
         assert context != null;
         this.type = type;
-        this.rewriter = rewriter;
         this.context = context;
     }
 
@@ -77,7 +76,6 @@ public class ObjectCodec<T> implements Codec<T> {
             return result;
         }
         catch (InstantiationException ie) {
-            ie.printStackTrace();
             throw new DecodingException(type, ie);
         }
         catch (IllegalAccessException iae) {
@@ -124,12 +122,6 @@ public class ObjectCodec<T> implements Codec<T> {
             return Expressions.createInteger(0, Resolver.class);
         }
     }
-
-    /*
-       * (non-Javadoc)
-       *
-       * @see java.lang.Object#toString()
-       */
 
     public String toString() {
         return "Codec of " + type.getSimpleName();

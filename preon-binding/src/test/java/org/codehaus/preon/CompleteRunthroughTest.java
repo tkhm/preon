@@ -45,12 +45,43 @@ public class CompleteRunthroughTest {
         assertEquals("foo, bar, baz", testSubject.someString);
     }
 
+    @Test
+    public void decodeUnderflow() throws Exception {
+        DefaultCodecFactory codecFactory = new DefaultCodecFactory();
+        Codec<TestSubject2> codec = codecFactory.create(TestSubject2.class);
+
+        Codecs.decode(codec, Hex.decodeHex(SAMPLE_HEX));
+    }
+
+    @Test
+    public void testValueOutOfRange() throws Exception {
+        TestSubject testSubject = new TestSubject();
+        testSubject.someNumber = Integer.MAX_VALUE;
+        testSubject.someString = "irrelevant";
+
+        DefaultCodecFactory codecFactory = new DefaultCodecFactory();
+        Codec<TestSubject> codec = codecFactory.create(TestSubject.class);
+
+        byte[] encoded = Codecs.encode(testSubject, codec);
+
+        TestSubject decoded = Codecs.decode(codec, encoded);
+        System.out.println(decoded.someNumber);
+    }
+
     static class TestSubject {
 
         @BoundNumber(size = "16", byteOrder = ByteOrder.BigEndian)
         private int someNumber;
 
         @BoundString(size = "2*8", encoding = "UTF-8")
+        private String someString;
+    }
+
+    static class TestSubject2 {
+        @BoundNumber(size = "16", byteOrder = ByteOrder.BigEndian)
+        private int someNumber;
+
+        @BoundString(size = "3*8", encoding = "UTF-8")
         private String someString;
     }
 }

@@ -48,8 +48,7 @@ public class BooleanCodecFactory implements CodecFactory {
      */
 
     @SuppressWarnings("unchecked")
-    public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type,
-                               ResolverContext context) {
+    public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type, ResolverContext context) {
         if (metadata == null || metadata.isAnnotationPresent(Bound.class)) {
             if (boolean.class.equals(type)) {
                 return (Codec<T>) new BooleanCodec(true);
@@ -71,8 +70,7 @@ public class BooleanCodecFactory implements CodecFactory {
             this.primitive = primitive;
         }
 
-        public Boolean decode(BitBuffer buffer, Resolver resolver,
-                              Builder builder) throws DecodingException {
+        public Boolean decode(BitBuffer buffer, Resolver resolver, Builder builder) throws DecodingException {
             return buffer.readAsBoolean();
         }
 

@@ -57,7 +57,8 @@ public class FixedLengthStringCodec implements Codec<String> {
     private final BoundString.ByteConverter byteConverter;
 
     public FixedLengthStringCodec(Charset encoding,
-                                  Expression<Integer, Resolver> sizeExpr, String match,
+                                  Expression<Integer, Resolver> sizeExpr,
+                                  String match,
                                   BoundString.ByteConverter byteConverter) {
         this.encoding = encoding;
         this.sizeExpr = sizeExpr;
@@ -66,8 +67,7 @@ public class FixedLengthStringCodec implements Codec<String> {
         this.encoder = encoding.newEncoder();
     }
 
-    public String decode(BitBuffer buffer, Resolver resolver,
-                         Builder builder) throws DecodingException {
+    public String decode(BitBuffer buffer, Resolver resolver, Builder builder) throws DecodingException {
 		/* This takes a slice of the BitBuffer as a ByteBuffer,
 		 * and feeds it into encoding.decode.
 		 * */

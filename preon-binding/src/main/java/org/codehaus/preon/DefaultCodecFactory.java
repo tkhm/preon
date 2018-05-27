@@ -196,8 +196,7 @@ public class DefaultCodecFactory implements CodecFactory {
         /**
          * {@inheritDoc} Every Codec constructed will be decorated by the {@link #decorators}.
          */
-        public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type,
-                                   ResolverContext context) {
+        public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type, ResolverContext context) {
             Codec<T> codec = delegate.create(metadata, type, context);
             if (codec != null) {
                 for (CodecDecorator decorator : decorators) {

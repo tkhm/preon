@@ -57,8 +57,8 @@ public class BindingsContext implements ObjectResolverContext {
      * @param outer The "outer" {@link ResolverContext}.
      */
     public BindingsContext(Class<?> type, ResolverContext outer) {
-        this.orderedBindings = new ArrayList<Binding>();
-        this.bindingsByName = new HashMap<String, Binding>();
+        this.orderedBindings = new ArrayList<>();
+        this.bindingsByName = new HashMap<>();
         this.outer = outer;
     }
 
@@ -89,8 +89,7 @@ public class BindingsContext implements ObjectResolverContext {
 
             if (binding == null) {
                 throw new BindingException(
-                        "Failed to create binding for bound data called "
-                                + name);
+                        "Failed to create binding for bound data called " + name);
             }
             return new BindingReference(binding);
         }
@@ -131,21 +130,9 @@ public class BindingsContext implements ObjectResolverContext {
             commonType = binding.getType();
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.codehaus.preon.el.Reference#getReferenceContext()
-         */
-
         public ResolverContext getReferenceContext() {
             return BindingsContext.this;
         }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.codehaus.preon.el.Reference#isAssignableTo(java.lang.Class)
-         */
 
         public boolean isAssignableTo(Class<?> type) {
 
@@ -159,12 +146,6 @@ public class BindingsContext implements ObjectResolverContext {
             return false;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.codehaus.preon.el.Reference#resolve(java.lang.Object)
-         */
-
         public Object resolve(Resolver context) {
             try {
                 String name = binding.getName();
@@ -175,21 +156,13 @@ public class BindingsContext implements ObjectResolverContext {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * org.codehaus.preon.el.ReferenceContext#selectAttribute(java.lang.String)
-         */
-
         @SuppressWarnings("unchecked")
         public Reference<Resolver> selectAttribute(String name) {
             Reference<Resolver>[] template = new Reference[0];
             List<Reference<Resolver>> references = new ArrayList<Reference<Resolver>>();
             for (Class<?> bound : binding.getTypes()) {
                 try {
-                    references.add(new PropertyReference(this, bound, name,
-                            BindingsContext.this, false));
+                    references.add(new PropertyReference(this, bound, name, BindingsContext.this));
                 } catch (BindingException be) {
                     // Ok, let's skip this one.
                 }
@@ -203,26 +176,12 @@ public class BindingsContext implements ObjectResolverContext {
             }
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.codehaus.preon.el.ReferenceContext#selectItem(java.lang.String)
-         */
-
         public Reference<Resolver> selectItem(String index) {
             Expression<Integer, Resolver> expr;
             expr = Expressions.createInteger(BindingsContext.this, index);
 
             return selectItem(expr);
         }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * org.codehaus.preon.el.ReferenceContext#selectItem(org.codehaus.preon.el.Expression
-         * )
-         */
 
         @SuppressWarnings("unchecked")
         public Reference<Resolver> selectItem(
@@ -239,8 +198,11 @@ public class BindingsContext implements ObjectResolverContext {
 
                 return new MultiReference<Resolver>(references);
             } else {
-                return new ArrayElementReference(this, binding.getType()
-                        .getComponentType(), index, BindingsContext.this);
+                return new ArrayElementReference(
+                        this,
+                        binding.getType().getComponentType(),
+                        index,
+                        BindingsContext.this);
             }
         }
 

@@ -69,7 +69,8 @@ public class NumericCodec implements Codec<Object> {
     private Expression<Integer, Resolver> matchExpr;
 
     public NumericCodec(Expression<Integer, Resolver> sizeExpr,
-                        ByteOrder byteOrder, NumericType type,
+                        ByteOrder byteOrder,
+                        NumericType type,
                         Expression<Integer, Resolver> matchExpr) {
         this.sizeExpr = sizeExpr;
         this.byteOrder = byteOrder;
@@ -77,8 +78,7 @@ public class NumericCodec implements Codec<Object> {
         this.matchExpr = matchExpr;
     }
 
-    public Object decode(BitBuffer buffer, Resolver resolver,
-                         Builder builder) throws DecodingException {
+    public Object decode(BitBuffer buffer, Resolver resolver, Builder builder) throws DecodingException {
         int size = ((Number) (this.sizeExpr.eval(resolver))).intValue();
         Object result = type.decode(buffer, size, byteOrder);
         if (matchExpr != null) {

@@ -26,10 +26,8 @@ package org.codehaus.preon.binding;
 
 import org.codehaus.preon.*;
 import org.codehaus.preon.buffer.BitBuffer;
-import org.codehaus.preon.buffer.BitBufferUnderflowException;
 import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.el.Expression;
-import org.codehaus.preon.el.ctx.VariableResolver;
 import org.codehaus.preon.reflect.ReflectionUtils;
 
 import java.io.IOException;
@@ -42,6 +40,7 @@ import java.util.List;
  * values from the field from which it is constructed.
  *
  * @author Wilfred Springer
+ * @author Thorsten Frank
  */
 public class StandardBindingFactory implements BindingFactory {
 
@@ -62,9 +61,7 @@ public class StandardBindingFactory implements BindingFactory {
 
         private Decorator<Builder> builderDecorator;
 
-        private Decorator<VariableResolver> resolverDecorator;
-
-        public FieldBinding(Field field, Codec<?> codec) {
+        FieldBinding(Field field, Codec<?> codec) {
             this.field = field;
             this.codec = codec;
             field.setAccessible(true);
@@ -72,21 +69,19 @@ public class StandardBindingFactory implements BindingFactory {
             builderDecorator = new ContextualBuilderDecorator(declaring);
         }
 
-        public void load(Object object, BitBuffer buffer, Resolver resolver,
-                         Builder builder) throws DecodingException {
+        public void load(Object object, BitBuffer buffer, Resolver resolver, Builder builder) throws DecodingException {
             try {
                 ReflectionUtils.makeAssessible(field);
-                Object value = codec.decode(buffer, resolver, builderDecorator
-                        .decorate(builder, object));
+                Object value = codec.decode(buffer, resolver, builderDecorator.decorate(builder, object));
                 field.set(object, value);
-            } catch (IllegalAccessException iae) {
-                throw new DecodingException(iae);
+            } catch (Throwable t) {
+                throw new DecodingException(buildErrorMessage(field.getName(), object), t);
             }
         }
 
-        private String buildErrorMessage(String underlyingCause, String fieldName, Object target) {
-            return String.format("[%s] while decoding field [%s] in type [%s]",
-                    underlyingCause, field, target.getClass().getSimpleName());
+        private String buildErrorMessage(String fieldName, Object target) {
+            return String.format("Error decoding field [%s] in type [%s]",
+                    fieldName, target.getClass().getSimpleName());
         }
 
         public Class<?>[] getTypes() {

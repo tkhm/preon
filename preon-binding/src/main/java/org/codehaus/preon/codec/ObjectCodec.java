@@ -24,19 +24,22 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.Builder;
-import org.codehaus.preon.Codec;
-import org.codehaus.preon.DecodingException;
-import org.codehaus.preon.Resolver;
+import org.codehaus.preon.*;
+import org.codehaus.preon.descriptor.Documenters;
+import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.binding.Binding;
 import org.codehaus.preon.buffer.BitBuffer;
-import org.codehaus.preon.channel.BitChannel;
+import org.codehaus.preon.el.ObjectResolverContext;
+import org.codehaus.preon.rendering.IdentifierRewriter;
 import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.el.Expressions;
-import org.codehaus.preon.el.ObjectResolverContext;
+import nl.flotsam.pecia.SimpleContents;
+import nl.flotsam.pecia.Documenter;
+import nl.flotsam.pecia.Table3Cols;
+import nl.flotsam.pecia.ParaContents;
 
-import java.io.IOException;
 import java.util.List;
+import java.io.IOException;
 
 /**
  * <p>The {@link Codec} capable of decoding instances of arbitrary classes. Typicaly, this {@link Codec} will be
@@ -48,17 +51,17 @@ public class ObjectCodec<T> implements Codec<T> {
 
     private final Class<T> type;
 
+    private final IdentifierRewriter rewriter;
+
     private final ObjectResolverContext context;
 
-    /**
-     *
-     * @param type
-     * @param context
-     */
-    public ObjectCodec(Class<T> type, ObjectResolverContext context) {
+    public ObjectCodec(Class<T> type, IdentifierRewriter rewriter,
+                       ObjectResolverContext context) {
         assert type != null;
+        assert rewriter != null;
         assert context != null;
         this.type = type;
+        this.rewriter = rewriter;
         this.context = context;
     }
 
@@ -76,6 +79,7 @@ public class ObjectCodec<T> implements Codec<T> {
             return result;
         }
         catch (InstantiationException ie) {
+            ie.printStackTrace();
             throw new DecodingException(type, ie);
         }
         catch (IllegalAccessException iae) {
@@ -123,6 +127,12 @@ public class ObjectCodec<T> implements Codec<T> {
         }
     }
 
+    /*
+       * (non-Javadoc)
+       *
+       * @see java.lang.Object#toString()
+       */
+
     public String toString() {
         return "Codec of " + type.getSimpleName();
     }
@@ -130,4 +140,77 @@ public class ObjectCodec<T> implements Codec<T> {
     public Class<?> getType() {
         return type;
     }
+
+    public CodecDescriptor getCodecDescriptor() {
+        return new CodecDescriptor() {
+
+            public <C extends SimpleContents<?>> Documenter<C> details(
+                    String bufferReference) {
+                return new Documenter<C>() {
+                    public void document(C target) {
+                        target
+                                .para()
+                                .document(reference(Adjective.THE, false))
+                                .text(
+                                        " is composed out of several other smaller elements.")
+                                .text(
+                                        " The table below provides an overview.")
+                                .end();
+                        Table3Cols<?> table3Cols = target.table3Cols();
+                        table3Cols = table3Cols.header().entry().para()
+                                .text("Name").end().entry().para().text(
+                                        "Description").end().entry().para()
+                                .text("Size (in bits)").end().end();
+                        for (Binding binding : ObjectCodec.this.context
+                                .getBindings()) {
+                            table3Cols
+                                    .row()
+                                    .entry()
+                                    .para()
+                                    .document(
+                                            Documenters.forBindingName(
+                                                    binding, rewriter))
+                                    .end()
+                                    .entry()
+                                    .document(
+                                            Documenters
+                                                    .forBindingDescription(binding))
+                                    .entry().para().document(
+                                    Documenters.forBits(binding
+                                            .getSize())).end()
+                                    .end();
+                        }
+                        table3Cols.end();
+                    }
+                };
+            }
+
+            public String getTitle() {
+                return rewriter.rewrite(type.getName());
+            }
+
+            public <C extends ParaContents<?>> Documenter<C> reference(
+                    Adjective adjective, boolean startWithCapital) {
+                return new Documenter<C>() {
+                    public void document(C target) {
+                        target.link(getTitle(), getTitle());
+                    }
+                };
+            }
+
+            public boolean requiresDedicatedSection() {
+                return true;
+            }
+
+            public <C extends ParaContents<?>> Documenter<C> summary() {
+                return new Documenter<C>() {
+                    public void document(C target) {
+                        target.text("A ").link(getTitle(), getTitle());
+                    }
+                };
+            }
+
+        };
+    }
+
 }

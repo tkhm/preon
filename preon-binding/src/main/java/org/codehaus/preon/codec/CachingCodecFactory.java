@@ -24,10 +24,11 @@
  */
 package org.codehaus.preon.codec;
 
+import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.*;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.channel.BitChannel;
-import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.descriptor.PassThroughCodecDescriptor2;
 import org.codehaus.preon.util.AnnotationUtils;
 
 import java.io.IOException;
@@ -185,6 +186,12 @@ public class CachingCodecFactory implements CodecFactory {
         public Class<?> getType() {
             return codec.getType();
         }
+
+        public CodecDescriptor getCodecDescriptor() {
+            return new PassThroughCodecDescriptor2(codec.getCodecDescriptor(),
+                    codec.getCodecDescriptor().requiresDedicatedSection());
+        }
+
     }
 
     private static class Key {

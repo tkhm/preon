@@ -24,19 +24,20 @@
  */
 package org.codehaus.preon.el;
 
-import org.junit.Test;
-import org.mockito.Mockito;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 public class NarrowingTest {
 
-    private ReferenceContext<Object> context = mock(ReferenceContext.class);
-    private Reference<Object> reference1 = mock(Reference.class);
-    private Reference<Object> reference2 = mock(Reference.class);
+    private ReferenceContext<Object> context = createMock(ReferenceContext.class);
+    private Reference<Object> reference1 = createMock(Reference.class);
+    private Reference<Object> reference2 = createMock(Reference.class);
 
     @Test
     public void testAssignable() {
@@ -46,26 +47,35 @@ public class NarrowingTest {
 
     @Test(expected = BindingException.class)
     public void testNoNarrowingPossible() {
-        when(context.selectAttribute("a")).thenReturn(reference1);
-        Mockito.<Class<?>>when(reference1.getType()).thenReturn(Integer.class);
-        Expressions.createBoolean(context, "a=='123'");
+        expect(context.selectAttribute("a")).andReturn(reference1);
+        expect(reference1.getType()).andStubReturn(Integer.class);
+        reference1.document((Document) anyObject());
+        replay(context, reference1);
+        try {
+            Expression expr = Expressions.createBoolean(context, "a=='123'");
+            fail("Expected binding exception.");
+        } finally {
+            verify(context, reference1);
+        }
     }
 
     @Test
     public void testNoNarrowingNeeded() {
-        when(context.selectAttribute("a")).thenReturn(reference1);
-        Mockito.<Class<?>>when(reference1.getType()).thenReturn(String.class);
-
-        Expressions.createBoolean(context, "a=='123'");
+        expect(context.selectAttribute("a")).andReturn(reference1);
+        expect(reference1.getType()).andStubReturn(String.class);
+        replay(context, reference1);
+        Expression expr = Expressions.createBoolean(context, "a=='123'");
+        verify(context, reference1);
     }
 
     @Test
     public void testNarrowingPossibleAndNeeded() {
-        when(context.selectAttribute("a")).thenReturn(reference1);
-        Mockito.<Class<?>>when(reference1.getType()).thenReturn(Object.class);
-        when(reference1.narrow(String.class)).thenReturn(reference2);
-        Mockito.<Class<?>>when(reference2.getType()).thenReturn(String.class);
-
-        Expressions.createBoolean(context, "a=='123'");
+        expect(context.selectAttribute("a")).andReturn(reference1);
+        expect(reference1.getType()).andStubReturn(Object.class);
+        expect(reference1.narrow(String.class)).andReturn(reference2);
+        expect(reference2.getType()).andStubReturn(String.class);
+        replay(context, reference1, reference2);
+        Expression expr = Expressions.createBoolean(context, "a=='123'");
+        verify(context, reference1, reference2);
     }
 }

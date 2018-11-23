@@ -24,15 +24,17 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.Resolver;
-import org.codehaus.preon.ResolverContext;
-import org.codehaus.preon.binding.Binding;
-import org.codehaus.preon.el.*;
-import org.codehaus.preon.el.ctx.MultiReference;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import org.codehaus.preon.el.*;
+import org.codehaus.preon.el.ctx.MultiReference;
+import org.codehaus.preon.el.util.StringBuilderDocument;
+import org.codehaus.preon.Resolver;
+import org.codehaus.preon.ResolverContext;
+import org.codehaus.preon.binding.Binding;
+import org.codehaus.preon.util.ParaContentsDocument;
 
 /**
  * A {@link ResolverContext} based on a collection of {@link Binding Bindings}.
@@ -57,8 +59,8 @@ public class BindingsContext implements ObjectResolverContext {
      * @param outer The "outer" {@link ResolverContext}.
      */
     public BindingsContext(Class<?> type, ResolverContext outer) {
-        this.orderedBindings = new ArrayList<>();
-        this.bindingsByName = new HashMap<>();
+        this.orderedBindings = new ArrayList<Binding>();
+        this.bindingsByName = new HashMap<String, Binding>();
         this.outer = outer;
     }
 
@@ -89,23 +91,76 @@ public class BindingsContext implements ObjectResolverContext {
 
             if (binding == null) {
                 throw new BindingException(
-                        "Failed to create binding for bound data called " + name);
+                        "Failed to create binding for bound data called "
+                                + name);
             }
             return new BindingReference(binding);
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.codehaus.preon.el.ReferenceContext#selectItem(java.lang.String)
+     */
+
     public Reference<Resolver> selectItem(String index) throws BindingException {
         throw new BindingException("Cannot resolve index on BindingContext.");
     }
 
-    public Reference<Resolver> selectItem(Expression<Integer, Resolver> index) throws BindingException {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.codehaus.preon.el.ReferenceContext#selectItem(org.codehaus.preon.el.Expression)
+     */
+
+    public Reference<Resolver> selectItem(Expression<Integer, Resolver> index)
+            throws BindingException {
+        StringBuilder builder = new StringBuilder();
+        index.document(new StringBuilderDocument(builder));
         throw new BindingException("Cannot resolve index on BindingContext.");
     }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
+     */
+
+    public void document(Document target) {
+        if (bindingsByName.size() > 0) {
+            target.text("one of ");
+            boolean passedFirst = false;
+            for (Binding binding : bindingsByName.values()) {
+                if (passedFirst) {
+                    target.text(", ");
+                }
+                target.text(binding.getName());
+                passedFirst = true;
+            }
+        } else {
+            target.text("no variables");
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.codehaus.preon.el.ObjectResolverContext#getResolver(java.lang.Object
+     * , org.codehaus.preon.Resolver)
+     */
 
     public Resolver getResolver(Object context, Resolver resolver) {
         return new BindingsResolver(context, resolver);
     }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.codehaus.preon.el.ObjectResolverContext#getBindings()
+     */
 
     public List<Binding> getBindings() {
         return orderedBindings;
@@ -130,9 +185,21 @@ public class BindingsContext implements ObjectResolverContext {
             commonType = binding.getType();
         }
 
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.codehaus.preon.el.Reference#getReferenceContext()
+         */
+
         public ResolverContext getReferenceContext() {
             return BindingsContext.this;
         }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.codehaus.preon.el.Reference#isAssignableTo(java.lang.Class)
+         */
 
         public boolean isAssignableTo(Class<?> type) {
 
@@ -146,6 +213,12 @@ public class BindingsContext implements ObjectResolverContext {
             return false;
         }
 
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.codehaus.preon.el.Reference#resolve(java.lang.Object)
+         */
+
         public Object resolve(Resolver context) {
             try {
                 String name = binding.getName();
@@ -156,13 +229,21 @@ public class BindingsContext implements ObjectResolverContext {
             }
         }
 
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.codehaus.preon.el.ReferenceContext#selectAttribute(java.lang.String)
+         */
+
         @SuppressWarnings("unchecked")
         public Reference<Resolver> selectAttribute(String name) {
             Reference<Resolver>[] template = new Reference[0];
             List<Reference<Resolver>> references = new ArrayList<Reference<Resolver>>();
             for (Class<?> bound : binding.getTypes()) {
                 try {
-                    references.add(new PropertyReference(this, bound, name, BindingsContext.this));
+                    references.add(new PropertyReference(this, bound, name,
+                            BindingsContext.this, false));
                 } catch (BindingException be) {
                     // Ok, let's skip this one.
                 }
@@ -176,12 +257,26 @@ public class BindingsContext implements ObjectResolverContext {
             }
         }
 
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.codehaus.preon.el.ReferenceContext#selectItem(java.lang.String)
+         */
+
         public Reference<Resolver> selectItem(String index) {
             Expression<Integer, Resolver> expr;
             expr = Expressions.createInteger(BindingsContext.this, index);
 
             return selectItem(expr);
         }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.codehaus.preon.el.ReferenceContext#selectItem(org.codehaus.preon.el.Expression
+         * )
+         */
 
         @SuppressWarnings("unchecked")
         public Reference<Resolver> selectItem(
@@ -198,13 +293,26 @@ public class BindingsContext implements ObjectResolverContext {
 
                 return new MultiReference<Resolver>(references);
             } else {
-                return new ArrayElementReference(
-                        this,
-                        binding.getType().getComponentType(),
-                        index,
-                        BindingsContext.this);
+                return new ArrayElementReference(this, binding.getType()
+                        .getComponentType(), index, BindingsContext.this);
             }
         }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
+         */
+
+        public void document(final Document target) {
+            binding.writeReference(new ParaContentsDocument(target));
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.codehaus.preon.el.Reference#getType()
+         */
 
         public Class<?> getType() {
             return commonType;
@@ -271,7 +379,12 @@ public class BindingsContext implements ObjectResolverContext {
                     Binding binding = bindingsByName.get(name);
 
                     if (context == null) {
-                        throw new BindingException("Failed to resolve ADD_LABEL_HERE due to incomplete context.");
+                        StringBuilderDocument document = new StringBuilderDocument();
+                        // TODO:
+//                        binding.describe(new ParaContentsDocument(document));
+                        throw new BindingException("Failed to resolve "
+                                + document.toString()
+                                + " due to incomplete context.");
                     }
 
                     try {

@@ -25,6 +25,7 @@
 package org.codehaus.preon.el.ctx;
 
 import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
@@ -60,6 +61,10 @@ public class ClassReferenceContext<T> implements Reference<T> {
     public Reference<T> selectItem(Expression<Integer, T> index)
             throws BindingException {
         throw new BindingException("Items not supported.");
+    }
+
+    public void document(Document target) {
+        target.text("a " + type.getSimpleName());
     }
 
     public Class<?> getType() {

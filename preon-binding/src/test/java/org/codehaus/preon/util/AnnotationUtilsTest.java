@@ -27,19 +27,14 @@ package org.codehaus.preon.util;
 import junit.framework.TestCase;
 import org.codehaus.preon.annotation.Purpose;
 import org.codehaus.preon.annotation.TypePrefix;
-import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Just checking the walls for some Annotation properties.
  *
  * @author Wilfred Springer (wis)
  */
-public class AnnotationUtilsTest {
+public class AnnotationUtilsTest extends TestCase {
 
-    @Test
     public void testEquals() {
         assertTrue(AnnotationUtils.equivalent(Test1.class, Test2.class));
         assertFalse(AnnotationUtils.equivalent(Test2.class, Test3.class));

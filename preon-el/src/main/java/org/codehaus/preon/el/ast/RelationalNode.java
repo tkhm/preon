@@ -24,12 +24,11 @@
  */
 package org.codehaus.preon.el.ast;
 
-import org.codehaus.preon.el.BindingException;
-import org.codehaus.preon.el.Reference;
-import org.codehaus.preon.el.ReferenceContext;
-import org.codehaus.preon.el.util.ClassUtils;
-
 import java.util.Set;
+
+import org.codehaus.preon.el.*;
+import org.codehaus.preon.el.util.ClassUtils;
+import org.codehaus.preon.el.util.StringBuilderDocument;
 
 /**
  * The node representing (part of) an expression that translates to a boolean
@@ -46,29 +45,67 @@ public class RelationalNode<T extends Comparable<T>, E> extends
             <T, E> boolean holds(E context, Node<T, E> a, Node<T, E> b) {
                 return a.compareTo(context, b) > 0;
             }
+
+            <T, E> void document(Node<T, E> a, Node<T, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" is greater than ");
+                b.document(target);
+            }
         },
         GTE {
             <T, E> boolean holds(E context, Node<T, E> a, Node<T, E> b) {
                 return a.compareTo(context, b) >= 0;
+            }
+
+            <T, E> void document(Node<T, E> a, Node<T, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" is greater than or equal to ");
+                b.document(target);
             }
         },
         EQ {
             <T, E> boolean holds(E context, Node<T, E> a, Node<T, E> b) {
                 return a.compareTo(context, b) == 0;
             }
+
+            <T, E> void document(Node<T, E> a, Node<T, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" equals ");
+                b.document(target);
+            }
         },
         LT {
             <T, E> boolean holds(E context, Node<T, E> a, Node<T, E> b) {
                 return a.compareTo(context, b) < 0;
+            }
+
+            <T, E> void document(Node<T, E> a, Node<T, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" is less than ");
+                b.document(target);
             }
         },
         LTE {
             <T, E> boolean holds(E context, Node<T, E> a, Node<T, E> b) {
                 return a.compareTo(context, b) <= 0;
             }
+
+            <T, E> void document(Node<T, E> a, Node<T, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" is less than or equal to ");
+                b.document(target);
+            }
         };
 
         abstract <T, E> boolean holds(E context, Node<T, E> lhs, Node<T, E> rhs);
+
+        abstract <T, E> void document(Node<T, E> lhs, Node<T, E> rhs,
+                org.codehaus.preon.el.Document target);
     }
 
     /**
@@ -135,6 +172,20 @@ public class RelationalNode<T extends Comparable<T>, E> extends
         rhs.gather(references);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
+     */
+    public void document(Document target) {
+        relation.document(lhs, rhs, target);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.codehaus.preon.el.Expression#isParameterized()
+     */
     public boolean isParameterized() {
         return lhs.isParameterized() || rhs.isParameterized();
     }
@@ -161,14 +212,23 @@ public class RelationalNode<T extends Comparable<T>, E> extends
             return new RelationalNode<T, E>(operator, comparableLhs,
                     comparableRhs);
         } else {
-            throw new BindingException("Incompatible types");
+            StringBuilder builder = new StringBuilder();
+            lhs.document(new StringBuilderDocument(builder));
+            builder.append(" and ");
+            rhs.document(new StringBuilderDocument(builder));
+            builder.append(" are incompatible.");
+            throw new BindingException(builder.toString());
         }
     }
 
     public static <T extends Comparable<T>, E> Node<T, E> createComparableNode(
             Node<?, E> node) {
-        if (!Comparable.class.isAssignableFrom(ClassUtils.getGuaranteedBoxedVersion(node.getType()))) {
-            throw new BindingException("Reference does not resolve to Comparable.");
+        if (!Comparable.class.isAssignableFrom(ClassUtils
+                .getGuaranteedBoxedVersion(node.getType()))) {
+            StringBuilder builder = new StringBuilder();
+            node.document(new StringBuilderDocument(builder));
+            throw new BindingException("Reference " + builder.toString()
+                    + " does not resolve to Comparable.");
         } else {
             return ((Node<T, E>) node);
         }

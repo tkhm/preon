@@ -26,6 +26,8 @@ package org.codehaus.preon.el.ast;
 
 import java.util.Set;
 
+import org.codehaus.preon.el.Document;
+import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
 
@@ -44,16 +46,33 @@ public class StringNode<E> extends AbstractNode<String, E> {
         this.value = value;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.ast.Node#eval(java.lang.Object)
+     */
     public String eval(E context) {
         return value;
     }
 
-    public void gather(Set<Reference<E>> references) { }
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.ast.Node#gather(java.util.Set)
+     */
+    public void gather(Set<Reference<E>> references) {
+    }
 
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.ast.Node#getType()
+     */
     public Class<String> getType() {
         return String.class;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.ast.Node#simplify()
+     */
     public Node<String, E> simplify() {
         return this;
     }
@@ -62,7 +81,22 @@ public class StringNode<E> extends AbstractNode<String, E> {
         return this;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.Expression#isParameterized()
+     */
     public boolean isParameterized() {
         return false;
     }
+
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
+     */
+    public void document(Document target) {
+        target.text("the String \"");
+        target.text(value);
+        target.text("\"");
+    }
+
 }

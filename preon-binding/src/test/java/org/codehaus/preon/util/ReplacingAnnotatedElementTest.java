@@ -24,20 +24,17 @@
  */
 package org.codehaus.preon.util;
 
-import org.junit.Test;
-
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.AnnotatedElement;
 
-import static org.junit.Assert.assertEquals;
+import junit.framework.TestCase;
 
-public class ReplacingAnnotatedElementTest {
+public class ReplacingAnnotatedElementTest extends TestCase {
 
-    @Test
     public void testReplacement() {
-        AnnotatedElement element = TestSubject.class;
+        AnnotatedElement element = Test.class;
         assertEquals("bar", element.getAnnotation(Foo.class).value());
         element = new ReplacingAnnotatedElement(element, new Foo() {
 
@@ -54,11 +51,11 @@ public class ReplacingAnnotatedElementTest {
     }
 
     @Foo("bar")
-    private static class TestSubject {
+    private static class Test {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    private @interface Foo {
+    private static @interface Foo {
         String value();
     }
 

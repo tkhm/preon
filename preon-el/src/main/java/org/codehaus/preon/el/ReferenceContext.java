@@ -45,7 +45,7 @@ package org.codehaus.preon.el;
  *            resolve a {@link Reference} created from this
  *            {@link ReferenceContext}.
  */
-public interface ReferenceContext<E> {
+public interface ReferenceContext<E> extends Descriptive {
 
     /**
      * Creates a new {@link Reference}; the new {@link Reference} will be

@@ -35,7 +35,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.lang.reflect.AnnotatedElement;
 
-import static org.junit.Assert.assertNull;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -66,7 +68,7 @@ public class ArrayCodecFactoryTest {
         Class<?> type = array.getClass();
         when(metadata.getAnnotation(BoundList.class)).thenReturn(boundList);
         when(boundList.size()).thenReturn("");
-        assertNull(factory.create(metadata, type, context));
+        assertThat(factory.create(metadata, type, context), is(nullValue()));
     }
 
 }

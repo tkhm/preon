@@ -25,10 +25,11 @@
 package org.codehaus.preon;
 
 import org.codehaus.preon.binding.*;
+import org.codehaus.preon.el.Expression;
+import nl.flotsam.pecia.*;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.codec.*;
-import org.codehaus.preon.el.Expression;
 
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
@@ -51,15 +52,18 @@ public class DefaultCodecFactory implements CodecFactory {
         return create(null, type, null);
     }
 
-    public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type, ResolverContext context) {
-        return create(metadata, type, new CodecFactory[0], new CodecDecorator[0], new BindingDecorator[0]);
+    public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type,
+                               ResolverContext context) {
+        return create(metadata, type, new CodecFactory[0],
+                new CodecDecorator[0], new BindingDecorator[0]);
     }
 
     public <T> Codec<T> create(AnnotatedElement metadata,
                                Class<T> type,
                                CodecFactory[] addOnFactories,
                                CodecDecorator[] addOnDecorators,
-                               BindingDecorator[] bindingDecorators) {
+                               BindingDecorator[] bindingDecorators)
+    {
 
         // The actual cache of Codecs.
         final List<Codec<?>> created = new ArrayList<Codec<?>>();
@@ -83,7 +87,8 @@ public class DefaultCodecFactory implements CodecFactory {
         decorators.add(new InitCodecDecorator());
         decorators.addAll(Arrays.asList(addOnDecorators));
 
-        DecoratingCodecFactory top = new DecoratingCodecFactory(codecFactory, decorators);
+        DecoratingCodecFactory top = new DecoratingCodecFactory(codecFactory,
+                decorators);
 
         // Add additional CodecFactories passed in.
         for (CodecFactory factory : addOnFactories) {
@@ -100,7 +105,8 @@ public class DefaultCodecFactory implements CodecFactory {
 
         // Create an ObjectCodecFactory that delegates to the
         // CompoundCodecFactory for each of its members.
-        ObjectCodecFactory objectCodecFactory = new ObjectCodecFactory(top, bindingFactory);
+        ObjectCodecFactory objectCodecFactory = new ObjectCodecFactory(top,
+                bindingFactory);
 
         // Make sure that Codecs created by the ObjectCodecFactory can be
         // cached.
@@ -161,6 +167,57 @@ public class DefaultCodecFactory implements CodecFactory {
             return delegate.getType();
         }
 
+        public CodecDescriptor getCodecDescriptor() {
+            return new CodecDescriptor() {
+
+                public <C extends SimpleContents<?>> Documenter<C> details(
+                        final String bufferReference) {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            created.remove(delegate);
+                            target.document(delegate.getCodecDescriptor()
+                                    .details(bufferReference));
+                            for (Codec<?> codec : created) {
+                                assert codec != null;
+                                CodecDescriptor descriptor = codec
+                                        .getCodecDescriptor();
+                                assert descriptor != null;
+                                if (descriptor.requiresDedicatedSection() && target instanceof Contents) {
+                                    AnnotatedSection<?> section = ((Contents<?>) target)
+                                            .section(descriptor.getTitle());
+                                    section
+                                            .mark(descriptor.getTitle())
+                                            .document(
+                                                    descriptor
+                                                            .details(bufferReference));
+                                    section.end();
+                                }
+                            }
+                        }
+                    };
+                }
+
+                public String getTitle() {
+                    return delegate.getCodecDescriptor().getTitle();
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> reference(
+                        Adjective adjective, boolean startWithCapital) {
+                    return delegate.getCodecDescriptor().reference(adjective, false);
+                }
+
+                public boolean requiresDedicatedSection() {
+                    return delegate.getCodecDescriptor()
+                            .requiresDedicatedSection();
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> summary() {
+                    return delegate.getCodecDescriptor().summary();
+                }
+
+            };
+        }
+
     }
 
     /**
@@ -196,7 +253,8 @@ public class DefaultCodecFactory implements CodecFactory {
         /**
          * {@inheritDoc} Every Codec constructed will be decorated by the {@link #decorators}.
          */
-        public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type, ResolverContext context) {
+        public <T> Codec<T> create(AnnotatedElement metadata, Class<T> type,
+                                   ResolverContext context) {
             Codec<T> codec = delegate.create(metadata, type, context);
             if (codec != null) {
                 for (CodecDecorator decorator : decorators) {

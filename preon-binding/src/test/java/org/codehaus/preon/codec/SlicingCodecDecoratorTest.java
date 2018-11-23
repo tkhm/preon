@@ -24,6 +24,15 @@
  */
 package org.codehaus.preon.codec;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+
+import java.lang.reflect.AnnotatedElement;
+
+import junit.framework.TestCase;
+
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.DecodingException;
 import org.codehaus.preon.Resolver;
@@ -31,17 +40,9 @@ import org.codehaus.preon.ResolverContext;
 import org.codehaus.preon.annotation.LengthPrefix;
 import org.codehaus.preon.annotation.Slice;
 import org.codehaus.preon.buffer.BitBuffer;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.lang.reflect.AnnotatedElement;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
-public class SlicingCodecDecoratorTest {
+public class SlicingCodecDecoratorTest extends TestCase {
 
     private BitBuffer buffer;
     private BitBuffer slice;
@@ -51,37 +52,42 @@ public class SlicingCodecDecoratorTest {
     private ResolverContext context;
     private Resolver resolver;
 
-    @Before
     public void setUp() {
-        buffer = mock(BitBuffer.class);
-        slice = mock(BitBuffer.class);
-        metadata = mock(AnnotatedElement.class);
-        prefix = mock(LengthPrefix.class);
-        decorated = mock(Codec.class);
-        resolver = mock(Resolver.class);
-        context = mock(ResolverContext.class);
+        buffer = createMock(BitBuffer.class);
+        slice = createMock(BitBuffer.class);
+        metadata = createMock(AnnotatedElement.class);
+        prefix = createMock(LengthPrefix.class);
+        decorated = createMock(Codec.class);
+        resolver = createMock(Resolver.class);
+        context = createMock(ResolverContext.class);
     }
 
-    @Test
     public void testSlicingWithSliceAnnotation() throws DecodingException {
         Test2 value = new Test2();
 
         // Stuff happening when we are decoding
-        when(buffer.slice(8L)).thenReturn(slice);
-        when(decorated.decode(slice, resolver, null)).thenReturn(value);
+        expect(buffer.slice(8L)).andReturn(slice);
+        expect(decorated.decode(slice, resolver, null)).andReturn(value);
 
+        replay(metadata, prefix, decorated, resolver, buffer, slice, context);
         SlicingCodecDecorator factory = new SlicingCodecDecorator();
-        Codec<Test2> codec = factory.decorate(decorated, metadata, Test2.class, context);
+        Codec<Test2> codec = factory.decorate(decorated, metadata, Test2.class,
+                context);
         codec.decode(buffer, resolver, null);
+
+        verify(metadata, prefix, decorated, resolver, buffer, slice, context);
     }
 
-    @Test
     public void testNoAnnotationsNoNothing() throws DecodingException {
-        when(metadata.isAnnotationPresent(Slice.class)).thenReturn(false);
+        expect(metadata.isAnnotationPresent(Slice.class)).andReturn(false);
 
+        replay(metadata, prefix, decorated, resolver, buffer, slice, context);
         SlicingCodecDecorator factory = new SlicingCodecDecorator();
-        Codec<Test3> codec = factory.decorate(decorated, metadata, Test3.class, context);
+        Codec<Test3> codec = factory.decorate(decorated, metadata, Test3.class,
+                context);
         assertEquals(codec, decorated);
+
+        verify(metadata, prefix, decorated, resolver, buffer, slice, context);
     }
 
     @Slice(size = "8")

@@ -24,10 +24,11 @@
  */
 package org.codehaus.preon.el.ast;
 
+import org.junit.Test;
+import static org.junit.Assert.*;
 import org.codehaus.preon.el.*;
 import org.codehaus.preon.el.ast.ArithmeticNode.Operator;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.codehaus.preon.el.util.StringBuilderDocument;
 
 /**
  * A number of tests for expression simplification.
@@ -37,24 +38,21 @@ import org.junit.Test;
  */
 public class NodeSimplificationTest {
 
-    @Ignore
     @Test
     public void testSimplifySimple() {
         IntegerNode<Object> node1 = new IntegerNode<Object>(12);
         IntegerNode<Object> node2 = new IntegerNode<Object>(5);
         ArithmeticNode<Object> node3 = new ArithmeticNode<Object>(Operator.plus, node1, node2);
         node3.simplify();
-        /*
         StringBuilderDocument doc = new StringBuilderDocument();
         node3.document(doc);
         assertEquals("the sum of 12 and 5", doc.toString());
         Node<Integer, Object> node4 = node3.simplify();
         doc = new StringBuilderDocument();
         node4.document(doc);
-        assertEquals("17", doc.toString());*/
+        assertEquals("17", doc.toString());
     }
 
-    @Ignore
     @Test
     public void testSimplifyTriple() {
         IntegerNode<Object> node1 = new IntegerNode<Object>(12);
@@ -63,13 +61,11 @@ public class NodeSimplificationTest {
         ArithmeticNode<Object> node4 = new ArithmeticNode<Object>(Operator.plus, node1, node2);
         node4 = new ArithmeticNode<Object>(Operator.plus, node4, node3);
         Node<Integer, Object> result = node4.simplify();
-        /*
         StringBuilderDocument doc = new StringBuilderDocument();
         result.document(doc);
-        assertEquals("22", doc.toString());*/
+        assertEquals("22", doc.toString());
     }
 
-    @Ignore
     @Test
     public void testTripleWithVarible() {
         IntegerNode<Object> node1 = new IntegerNode<Object>(12);
@@ -79,9 +75,9 @@ public class NodeSimplificationTest {
         ArithmeticNode<Object> node4 = new ArithmeticNode<Object>(Operator.plus, node1, node2);
         node4 = new ArithmeticNode<Object>(Operator.plus, node4, node3);
         Node<Integer, Object> result = node4.simplify();
-        /*StringBuilderDocument doc = new StringBuilderDocument();
+        StringBuilderDocument doc = new StringBuilderDocument();
         result.document(doc);
-        assertEquals("the sum of 17 and a", doc.toString());*/
+        assertEquals("the sum of 17 and a", doc.toString());
     }
 
     private class TestReference implements Reference<Object> {
@@ -115,6 +111,10 @@ public class NodeSimplificationTest {
         public Reference<Object> selectItem(Expression<Integer, Object> index)
                 throws BindingException {
             return null;
+        }
+
+        public void document(Document target) {
+            target.text(name);
         }
 
         public Class<?> getType() {

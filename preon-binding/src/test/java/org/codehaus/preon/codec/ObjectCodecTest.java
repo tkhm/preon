@@ -28,24 +28,29 @@ import org.codehaus.preon.Resolver;
 import org.codehaus.preon.binding.Binding;
 import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.el.ObjectResolverContext;
+import org.codehaus.preon.rendering.IdentifierRewriter;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import java.io.IOException;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 import java.util.Arrays;
 import java.util.List;
+import java.io.IOException;
 
-import static org.mockito.Mockito.*;
-
-// TODO unmock this test - this could be easily done with actual bindings in the TestSubject class
 @RunWith(org.mockito.runners.MockitoJUnitRunner.class)
 public class ObjectCodecTest {
 
     @Mock
     private ObjectResolverContext context;
+
+    @Mock
+    private IdentifierRewriter rewriter;
 
     @Mock
     private Binding binding1;
@@ -66,10 +71,10 @@ public class ObjectCodecTest {
         listOfBindings = Arrays.asList(binding1, binding2);
     }
 
-    @Test
+    @org.junit.Test
     public void shouldEncodeAllFields() throws IOException {
-        ObjectCodec<TestSubject> codec = new ObjectCodec<TestSubject>(TestSubject.class, context);
-        TestSubject value = new TestSubject();
+        ObjectCodec<Test> codec = new ObjectCodec<Test>(Test.class, rewriter, context);
+        Test value = new Test();
         when(context.getBindings()).thenReturn(listOfBindings);
         codec.encode(value, channel, resolver);
         verify(binding1).save(Mockito.eq(value), Mockito.eq(channel), Mockito.<Resolver>any(Resolver.class));
@@ -77,7 +82,8 @@ public class ObjectCodecTest {
         verifyNoMoreInteractions(binding1, binding2);
     }
 
-    private static class TestSubject {
+    private static class Test {
+
 
     }
 

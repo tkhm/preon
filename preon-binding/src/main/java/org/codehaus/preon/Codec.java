@@ -24,9 +24,9 @@
  */
 package org.codehaus.preon;
 
+import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.channel.BitChannel;
-import org.codehaus.preon.el.Expression;
 
 import java.io.IOException;
 
@@ -75,6 +75,14 @@ public interface Codec<T> {
      *         Codec.
      */
     Expression<Integer, Resolver> getSize();
+
+    /**
+     * Returns an object that is capable of rendering a description of the data structure encoded/decoded by this
+     * Codec.
+     *
+     * @return An object capable of describing the {@link Codec}.
+     */
+    CodecDescriptor getCodecDescriptor();
 
     /**
      * Returns an array of types constructed potentially by this Codec.

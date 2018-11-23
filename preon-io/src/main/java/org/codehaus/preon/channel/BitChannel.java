@@ -78,6 +78,4 @@ public interface BitChannel {
     /** Closes the channel. */
     void close() throws IOException;
 
-    /** FLush any remaining bits. */
-    void flush() throws IOException;
 }

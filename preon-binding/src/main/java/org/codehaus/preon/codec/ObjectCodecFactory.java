@@ -24,6 +24,8 @@
  */
 package org.codehaus.preon.codec;
 
+import nl.flotsam.pecia.Documenter;
+import nl.flotsam.pecia.ParaContents;
 import org.codehaus.preon.*;
 import org.codehaus.preon.annotation.Bound;
 import org.codehaus.preon.annotation.BoundObject;
@@ -32,6 +34,8 @@ import org.codehaus.preon.binding.BindingFactory;
 import org.codehaus.preon.binding.StandardBindingFactory;
 import org.codehaus.preon.el.ImportSupportingObjectResolverContext;
 import org.codehaus.preon.el.ObjectResolverContext;
+import org.codehaus.preon.rendering.ClassNameRewriter;
+import org.codehaus.preon.rendering.IdentifierRewriter;
 import org.codehaus.preon.util.HidingAnnotatedElement;
 
 import java.lang.reflect.AnnotatedElement;
@@ -51,6 +55,9 @@ public class ObjectCodecFactory implements CodecFactory {
      * have coverage for all fields defined.)
      */
     private CodecFactory codecFactory;
+
+    /** The object used to turn Java identifiers into something that is potentially readable by humans. */
+    private IdentifierRewriter rewriter = new ClassNameRewriter();
 
     /**
      * Constructs a new instance, using a default mechanism for constructing {@link org.codehaus.preon.binding.Binding}
@@ -110,11 +117,14 @@ public class ObjectCodecFactory implements CodecFactory {
                 context);
         passThroughContext = ImportSupportingObjectResolverContext.decorate(
                 passThroughContext, type);
-        harvestBindings(type, passThroughContext);
+        CodecReference reference = new CodecReference();
+        harvestBindings(type, passThroughContext, reference);
         if (passThroughContext.getBindings().size() == 0) {
             throw new CodecConstructionException("Failed to find a single bound field on " + type.getName());
         }
-        ObjectCodec<T> result = new ObjectCodec<T>(type, passThroughContext);
+        ObjectCodec<T> result = new ObjectCodec<T>(type, rewriter,
+                passThroughContext);
+        reference.setCodec(result);
         return result;
     }
 
@@ -150,11 +160,12 @@ public class ObjectCodecFactory implements CodecFactory {
         return new HidingAnnotatedElement(BoundObject.class, metadata);
     }
 
-    private <T> void harvestBindings(Class<T> type, ObjectResolverContext context) {
+    private <T> void harvestBindings(Class<T> type,
+                                     ObjectResolverContext context, CodecReference reference) {
         if (Object.class.equals(type)) {
             return;
         }
-        harvestBindings(type.getSuperclass(), context);
+        harvestBindings(type.getSuperclass(), context, reference);
         Field[] fields = type.getDeclaredFields();
         // For creating the Codecs, we already need a modified
         // ReferenceContext, allowing us to incrementally bind to references
@@ -165,10 +176,27 @@ public class ObjectCodecFactory implements CodecFactory {
                 Codec<?> codec = codecFactory.create(field, field.getType(),
                         context);
                 if (codec != null) {
-                    Binding binding = bindingFactory.create(field, field, codec, context);
+                    Binding binding = bindingFactory.create(field, field,
+                            codec, context, reference);
                     context.add(field.getName(), binding);
                 }
             }
         }
     }
+
+    private static class CodecReference implements Documenter<ParaContents<?>> {
+
+        private Codec<?> codec;
+
+        public void document(ParaContents<?> target) {
+            target.document(codec.getCodecDescriptor().reference(CodecDescriptor.Adjective.THE,
+                    false));
+        }
+
+        public void setCodec(Codec<?> codec) {
+            this.codec = codec;
+        }
+
+    }
+
 }

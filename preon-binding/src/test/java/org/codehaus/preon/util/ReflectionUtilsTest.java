@@ -24,15 +24,12 @@
  */
 package org.codehaus.preon.util;
 
-import junit.framework.TestCase;
 import org.codehaus.preon.reflect.ReflectionUtils;
-import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
+import junit.framework.TestCase;
 
-public class ReflectionUtilsTest {
+public class ReflectionUtilsTest extends TestCase {
 
-    @Test
     public void testGetField() {
         assertNotNull(ReflectionUtils.getField(Test2.class, "value2"));
         assertNotNull(ReflectionUtils.getField(Test2.class, "value1"));

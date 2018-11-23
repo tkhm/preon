@@ -24,9 +24,18 @@
  */
 package org.codehaus.preon.el;
 
-import org.codehaus.preon.Resolver;
-
 import java.lang.reflect.Field;
+
+import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Document;
+import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.el.Expressions;
+import org.codehaus.preon.el.InvalidExpressionException;
+import org.codehaus.preon.el.Reference;
+import org.codehaus.preon.el.ReferenceContext;
+import org.codehaus.preon.Resolver;
+import org.codehaus.preon.rendering.CamelCaseRewriter;
+import org.codehaus.preon.rendering.IdentifierRewriter;
 
 /**
  * A {@link Reference} to a property. (And in this case, property means a private field, not a bean property.)
@@ -34,6 +43,8 @@ import java.lang.reflect.Field;
  * @author Wilfred Springer (wis)
  */
 public class PropertyReference implements Reference<Resolver> {
+
+    private static IdentifierRewriter rewriter = new CamelCaseRewriter(false);
 
     /** The field representing the property. */
     private Field field;
@@ -44,20 +55,19 @@ public class PropertyReference implements Reference<Resolver> {
     /** The context for constructing references. */
     private ReferenceContext<Resolver> context;
 
+    /** Include the type in the description generated. */
+    private boolean includeType = true;
+
     /**
-     * Constructs a new {@link Reference}. This constructor will attempt to convert the type and name supplied into
-     * a {@link Field}.
+     * Constructs a new {@link Reference}.
      *
      * @param reference The source for this property.
      * @param type      The type of the source.
      * @param name      The name of the property.
      * @param context   The original context, to be used when constructing other references.
-     * @throws BindingException if no field with that name exists in the type or if cannot be made accessible
      */
-    public PropertyReference(Reference<Resolver> reference,
-                             Class<?> type,
-                             String name,
-                             ReferenceContext<Resolver> context) {
+    public PropertyReference(Reference<Resolver> reference, Class<?> type,
+                             String name, ReferenceContext<Resolver> context) {
         this.reference = reference;
         this.context = context;
         try {
@@ -70,13 +80,12 @@ public class PropertyReference implements Reference<Resolver> {
         }
     }
 
-    /**
-     * Creates a new {@link PropertyReference}.
-     *
-     * @param reference the source for this property
-     * @param field     the field being referenced
-     * @param context   reference context
-     */
+    public PropertyReference(Reference<Resolver> reference, Class<?> type,
+                             String name, ReferenceContext<Resolver> context, boolean includeType) {
+        this(reference, type, name, context);
+        this.includeType = includeType;
+    }
+
     private PropertyReference(Reference<Resolver> reference, Field field, ReferenceContext<Resolver> context) {
         this.reference = reference;
         this.field = field;
@@ -87,9 +96,11 @@ public class PropertyReference implements Reference<Resolver> {
         try {
             return field.get(reference.resolve(context));
         } catch (IllegalArgumentException e) {
-            throw new BindingException("Cannot resolve " + field.getName() + " on context.", e);
+            throw new BindingException("Cannot resolve " + field.getName()
+                    + " on context.", e);
         } catch (IllegalAccessException e) {
-            throw new BindingException("Access denied for field  " + field.getName(), e);
+            throw new BindingException("Access denied for field  "
+                    + field.getName(), e);
         }
     }
 
@@ -99,7 +110,8 @@ public class PropertyReference implements Reference<Resolver> {
 
     public Reference<Resolver> selectItem(String index) {
         try {
-            Expression<Integer, Resolver> expr = Expressions.createInteger(context, index);
+            Expression<Integer, Resolver> expr = Expressions.createInteger(
+                    context, index);
             return selectItem(expr);
         } catch (InvalidExpressionException e) {
             throw new BindingException("Invalid index.", e);
@@ -108,7 +120,8 @@ public class PropertyReference implements Reference<Resolver> {
 
     public Reference<Resolver> selectItem(Expression<Integer, Resolver> index) {
         Class<?> type = this.field.getType();
-        return new ArrayElementReference(this, type.getComponentType(), index, context);
+        return new ArrayElementReference(this, type.getComponentType(), index,
+                context);
     }
 
     public Class<?> getType() {
@@ -128,6 +141,19 @@ public class PropertyReference implements Reference<Resolver> {
 
     public boolean equals(PropertyReference other) {
         return field.equals(other.field) && reference.equals(other.reference);
+    }
+
+    public void document(Document target) {
+        target.text("the " + rewriter.rewrite(field.getName()));
+        if (includeType) {
+            target.text(" (a ");
+            target.text(getType().getSimpleName());
+            target.text(") ");
+        } else {
+            target.text(" ");
+        }
+        target.text("of ");
+        reference.document(target);
     }
 
     public ReferenceContext<Resolver> getReferenceContext() {

@@ -24,32 +24,36 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.AnnotatedElement;
+
+import org.codehaus.preon.Builder;
+import org.codehaus.preon.Codec;
+import org.codehaus.preon.DecodingException;
+import org.codehaus.preon.Resolver;
+import org.codehaus.preon.ResolverContext;
 import org.codehaus.preon.annotation.BoundString;
 import org.codehaus.preon.annotation.BoundString.Encoding;
 import org.codehaus.preon.annotation.BoundString.NullConverter;
 import org.codehaus.preon.buffer.BitBuffer;
-import org.codehaus.preon.buffer.DefaultBitBuffer;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.AnnotatedElement;
 import java.nio.ByteBuffer;
 
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.fail;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import junit.framework.TestCase;
 
 
-public class StringCodecFactoryTest {
+public class StringCodecFactoryTest extends TestCase {
 
     private BoundString settings;
 
     private AnnotatedElement metadata;
+
+    private BitBuffer buffer;
 
     private ResolverContext context;
 
@@ -57,70 +61,75 @@ public class StringCodecFactoryTest {
 
     private Resolver resolver;
 
-    @Before
     public void setUp() {
-        settings = mock(BoundString.class);
-        metadata = mock(AnnotatedElement.class);
-        context = mock(ResolverContext.class);
-        builder = mock(Builder.class);
-        resolver = mock(Resolver.class);
+        settings = createMock(BoundString.class);
+        metadata = createMock(AnnotatedElement.class);
+        buffer = createMock(BitBuffer.class);
+        context = createMock(ResolverContext.class);
+        builder = createMock(Builder.class);
+        resolver = createMock(Resolver.class);
     }
 
-    @Test
-    public void testDecoding() throws Exception {
-        when(metadata.getAnnotation(BoundString.class)).thenReturn(settings);
-        when(settings.encoding()).thenReturn(Encoding.ASCII);
-        when(settings.size()).thenReturn("2");
-        Mockito.<Class<?>>when(settings.converter()).thenReturn(NullConverter.class);
-        when(settings.match()).thenReturn("");
+    public void testDecoding() throws DecodingException {
+        expect(metadata.getAnnotation(BoundString.class)).andReturn(settings);
+        expect(settings.encoding()).andReturn(Encoding.ASCII);
+        expect(settings.size()).andReturn("2").anyTimes();
+        expect(settings.converter()).andStubReturn(NullConverter.class);
+        expect(settings.match()).andReturn("");
+        expect(buffer.readAsByte(8)).andReturn((byte) 'b');
+		expect(buffer.readAsByte(8)).andReturn((byte) 'm');
+        replay(settings, metadata, buffer, context, resolver);
 
-        Codec<String> codec = new StringCodecFactory().create(metadata, String.class, context);
-
-        String result = codec.decode(wrap("bm"), resolver, builder);
+        StringCodecFactory factory = new StringCodecFactory();
+        Codec<String> codec = factory.create(metadata, String.class, context);
+        // Null resolver, since the resolver isn't used (yet)
+        String result = codec.decode(buffer, resolver, builder);
         assertNotNull(result);
         assertEquals("bm", result);
+
+        verify(settings, metadata, buffer, context, resolver);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testMatching() throws Throwable {
-        when(metadata.getAnnotation(BoundString.class)).thenReturn(settings);
-        when(settings.encoding()).thenReturn(Encoding.ASCII);
-        when(settings.size()).thenReturn("2");
-        Mockito.<Class<?>>when(settings.converter()).thenReturn(NullConverter.class);
-        when(settings.match()).thenReturn("fo");
-
-        Codec<String> codec = new StringCodecFactory().create(metadata, String.class, context);
-
+    public void testMatching() throws DecodingException {
+        expect(metadata.getAnnotation(BoundString.class)).andReturn(settings);
+        expect(settings.encoding()).andReturn(Encoding.ASCII);
+        expect(settings.size()).andReturn("2").anyTimes();
+        expect(settings.converter()).andStubReturn(NullConverter.class);
+        expect(settings.match()).andReturn("fo");
+        expect(buffer.readAsByte(8)).andReturn((byte) 'b');
+		expect(buffer.readAsByte(8)).andReturn((byte) 'm');
+        replay(settings, metadata, buffer, context, resolver);
+        StringCodecFactory factory = new StringCodecFactory();
+        Codec<String> codec = factory.create(metadata, String.class, context);
+        // Null resolver, since the resolver isn't used (yet)
         try {
-            String result = codec.decode(wrap("bm"), resolver, builder);
+            String result = codec.decode(buffer, resolver, builder);
             fail("Matching should have failed.");
         } catch (DecodingException de) {
-            throw de.getCause();
+            assertEquals(IllegalStateException.class, de.getCause().getClass());
         }
+        verify(settings, metadata, buffer, context, resolver);
     }
 
-    @Test
-    public void testNullTerminatedString() throws Exception {
-        when(metadata.getAnnotation(BoundString.class)).thenReturn(settings);
-        when(settings.encoding()).thenReturn(Encoding.ASCII);
-        when(settings.size()).thenReturn("");
-        Mockito.<Class<?>>when(settings.converter()).thenReturn(NullConverter.class);
-		when(settings.match()).thenReturn("");
-
-        ByteBuffer byteBuffer = ByteBuffer.allocate(3);
-        byteBuffer.put("bm".getBytes("US-ASCII"));
-        byteBuffer.put((byte) 0);
-        byteBuffer.flip();
-
-        Codec<String> codec = new StringCodecFactory().create(metadata, String.class, context);
-        assertEquals("bm", codec.decode(new DefaultBitBuffer(byteBuffer), resolver, builder));
+    public void testNullTerminatedString() throws DecodingException {
+        expect(metadata.getAnnotation(BoundString.class)).andReturn(settings);
+        expect(settings.encoding()).andReturn(Encoding.ASCII);
+        expect(settings.size()).andReturn("").anyTimes();
+        expect(settings.converter()).andStubReturn(NullConverter.class);
+		expect(buffer.readAsByte(8)).andReturn((byte) 'b');
+		expect(buffer.readAsByte(8)).andReturn((byte) 'm');
+		expect(buffer.readAsByte(8)).andReturn((byte) 0);
+		expect(settings.match()).andReturn("");
+        replay(settings, buffer, metadata, context, resolver);
+        StringCodecFactory factory = new StringCodecFactory();
+        Codec<String> codec = factory.create(metadata, String.class, context);
+        assertEquals("bm", codec.decode(buffer, resolver, builder));
+        verify(settings, metadata, buffer, context, resolver);
     }
 
-    private BitBuffer wrap(String string) throws UnsupportedEncodingException {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(string.length());
-        byteBuffer.put(string.getBytes("US-ASCII"));
-        //string.chars().forEach(i -> byteBuffer.put((byte) i));
-        byteBuffer.flip();
-        return new DefaultBitBuffer(byteBuffer);
-    }
+    /* public void testDecodeASCII() throws UnsupportedEncodingException {
+        byte[] buffer = "foobar".getBytes();
+        assertEquals("foobar", BoundString.Encoding.ASCII.decode(buffer));
+    } */ //Commented out, as no longer implemented this way
+
 }

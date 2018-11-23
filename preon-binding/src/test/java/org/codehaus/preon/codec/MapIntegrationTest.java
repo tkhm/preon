@@ -37,7 +37,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.hasEntry;
 
 public class MapIntegrationTest {
 
@@ -48,9 +48,8 @@ public class MapIntegrationTest {
                 Codecs.decode(codec, (byte) 0x02, (byte) (0xff & 'a'), (byte) (0xff & 'b'), (byte) 0x03,
                                      (byte) 0x02, (byte) (0xff & 'c'), (byte) (0xff & 'd'), (byte) 0x04);
         assertThat(object.data.size(), is(2));
-
-        assertEquals(3, (int) object.data.get("ab"));
-        assertEquals(4, (int) object.data.get("cd"));
+        assertThat(object.data, hasEntry("ab", 3));
+        assertThat(object.data, hasEntry("cd", 4));
     }
 
     public static class Sample {

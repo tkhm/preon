@@ -24,19 +24,23 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.Resolver;
-import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.Resolver;
+
+import static org.codehaus.preon.buffer.ByteOrder.BigEndian;
+
+import org.codehaus.preon.channel.BitChannel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.codehaus.preon.buffer.ByteOrder.BigEndian;
-import static org.mockito.Mockito.*;
 
 @RunWith(org.mockito.runners.MockitoJUnitRunner.class)
 public class EnumCodecTest {

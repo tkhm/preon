@@ -52,5 +52,10 @@ public class ImplicitsContext<E> implements ReferenceContext<E> {
     public Reference<E> selectItem(Expression<Integer, E> index) throws BindingException {
         return nested.selectItem(index);
     }
+
+    public void document(Document target) {
+        nested.document(target);
+    }
+
 }
 

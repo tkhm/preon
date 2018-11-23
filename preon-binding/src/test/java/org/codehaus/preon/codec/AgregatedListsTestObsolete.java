@@ -24,23 +24,21 @@
  */
 package org.codehaus.preon.codec;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.Codecs;
 import org.codehaus.preon.DecodingException;
 import org.codehaus.preon.annotation.BoundList;
 import org.codehaus.preon.annotation.BoundNumber;
 import org.codehaus.preon.annotation.Slice;
-import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import junit.framework.TestCase;
 
 
-public class AgregatedListsTestObsolete {
+public class AgregatedListsTestObsolete extends TestCase {
 
-    @Test
     public void testVariableResolutionInClassReferedByAnotherClass()
             throws DecodingException {
 
@@ -65,7 +63,6 @@ public class AgregatedListsTestObsolete {
         assertEquals(254, result.test3List.get(1).value);
     }
 
-    @Test
     public void testSlicedUnboundedListOfLists() throws DecodingException {
 
         Codec<Test1> codec = Codecs.create(Test1.class);

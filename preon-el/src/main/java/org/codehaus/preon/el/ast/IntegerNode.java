@@ -24,10 +24,11 @@
  */
 package org.codehaus.preon.el.ast;
 
+import java.util.Set;
+
+import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
-
-import java.util.Set;
 
 /**
  * A node representing an integer literal.
@@ -68,6 +69,10 @@ public class IntegerNode<E> extends AbstractNode<Integer, E> {
 
     public void gather(Set<Reference<E>> references) {
         // Nothing to add
+    }
+
+    public void document(Document target) {
+        target.text(value.toString());
     }
 
     /*

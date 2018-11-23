@@ -28,12 +28,11 @@ import org.antlr.runtime.RecognitionException;
 import org.codehaus.preon.el.ctx.VariableContext;
 import org.codehaus.preon.el.ctx.VariableDefinitions;
 import org.codehaus.preon.el.ctx.VariableResolver;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class LimboTest {
 
@@ -45,17 +44,18 @@ public class LimboTest {
 
     @Before
     public void setUp() throws Exception {
-        resolver = mock(VariableResolver.class);
-        defs = mock(VariableDefinitions.class);
+        resolver = EasyMock.createMock(VariableResolver.class);
+        defs = EasyMock.createMock(VariableDefinitions.class);
         context = new VariableContext(defs);
     }
 
     @Test
     public void testUnderscores() {
-        when(resolver.get("FOO_BAR")).thenReturn(12);
-        when(defs.getType("FOO_BAR")).thenReturn(Integer.class);
-
+        EasyMock.expect(resolver.get("FOO_BAR")).andReturn(12).anyTimes();
+        EasyMock.expect(defs.getType("FOO_BAR")).andReturn(Integer.class).anyTimes();
+        EasyMock.replay(resolver, defs);
         assertEquals(12, arithmetic(context, resolver, "FOO_BAR"));
+        EasyMock.verify(resolver, defs);
     }
 
     @Test
@@ -72,14 +72,15 @@ public class LimboTest {
 
     @Test
     public void testPow() throws RecognitionException, InvalidExpressionException {
-        when(resolver.get("a")).thenReturn(Integer.valueOf(3));
-        when(defs.getType("a")).thenReturn(Integer.class);
-
+        EasyMock.expect(resolver.get("a")).andReturn(Integer.valueOf(3)).anyTimes();
+        EasyMock.expect(defs.getType("a")).andReturn(Integer.class).anyTimes();
+        EasyMock.replay(resolver, defs);
         assertEquals(8, arithmetic(context, resolver, "2^a"));
         assertEquals(9, arithmetic(context, resolver, "a^2"));
         assertEquals(27, arithmetic(context, resolver, "a^a"));
         assertEquals(9, arithmetic(context, resolver, "a^(a-1)"));
         assertEquals(26, arithmetic(context, resolver, "a ^ a -1"));
+        EasyMock.verify(resolver, defs);
     }
 
     @Test
@@ -116,11 +117,11 @@ public class LimboTest {
 
     @Test
     public void testBooleans() throws RecognitionException, InvalidExpressionException {
-        when(resolver.get("foo")).thenReturn(true);
-        when(defs.getType("foo")).thenReturn(Boolean.class);
-        when(resolver.get("bar")).thenReturn(false);
-        when(defs.getType("bar")).thenReturn(Boolean.class);
-
+        EasyMock.expect(resolver.get("foo")).andReturn(true).anyTimes();
+        EasyMock.expect(defs.getType("foo")).andReturn(Boolean.class).anyTimes();
+        EasyMock.expect(resolver.get("bar")).andReturn(false).anyTimes();
+        EasyMock.expect(defs.getType("bar")).andReturn(Boolean.class).anyTimes();
+        EasyMock.replay(resolver, defs);
         assertTrue(condition(context, resolver, "true"));
         assertFalse(condition(context, resolver, "false"));
         assertTrue(condition(context, resolver, "true == foo"));
@@ -128,19 +129,26 @@ public class LimboTest {
 
     @Test(expected=InvalidExpressionException.class)
     public void testParserProblemArithmetic() {
-        when(defs.getType("a")).thenReturn(Integer.class);
+        EasyMock.expect(defs.getType("a")).andReturn(Integer.class);
         // Previously asserted that "b" would also be checked, but a different
         // ANTLR generated code path negates that now.
-
-        Expression<Integer, VariableResolver> expr = Expressions.createInteger(context, "a - * b");
+        EasyMock.replay(defs);
+        try {
+            Expression<Integer, VariableResolver> expr = Expressions.createInteger(context,
+                    "a - * b");
+            fail("Expection parser problem.");
+        } finally {
+            EasyMock.verify(defs);
+        }
     }
 
     @Test
     public void testWithSimpleReference() throws RecognitionException, InvalidExpressionException {
-        when(resolver.get("a")).thenReturn(Integer.valueOf(3));
-        when(defs.getType("a")).thenReturn(Integer.class);
-
+        EasyMock.expect(resolver.get("a")).andReturn(Integer.valueOf(3)).anyTimes();
+        EasyMock.expect(defs.getType("a")).andReturn(Integer.class).anyTimes();
+        EasyMock.replay(resolver, defs);
         assertEquals(8, arithmetic(context, resolver, "5 + a"));
+        EasyMock.verify(resolver, defs);
     }
 
     @Test
@@ -148,10 +156,11 @@ public class LimboTest {
         Sample test = new Sample();
         test.b = new Sample();
         test.b.c = 3;
-        when(resolver.get("a")).thenReturn(test);
-        when(defs.getType("a")).thenReturn(Sample.class);
-
+        EasyMock.expect(resolver.get("a")).andReturn(test);
+        EasyMock.expect(defs.getType("a")).andReturn(Sample.class);
+        EasyMock.replay(resolver, defs);
         assertEquals(8, arithmetic(context, resolver, "5 + a.b.c"));
+        EasyMock.verify(resolver, defs);
     }
 
     @Test
@@ -182,27 +191,33 @@ public class LimboTest {
     
     @Test
     public void testStringReferencesResolution() {
-        when(resolver.get("a")).thenReturn("Whatever");
-
+        EasyMock.expect(resolver.get("a")).andReturn("Whatever");
+        EasyMock.replay(resolver);
         Expression<Object, VariableResolver> expr = Expressions.create(context, "a");
         assertEquals("Whatever", expr.eval(resolver));
+        EasyMock.verify(resolver);
     }
     
     @Test(expected=BindingException.class)
     public void testAddingStrings() {
-        when(defs.getType("a")).thenReturn(String.class);
-
-
-        Expression<Object, VariableResolver> expr = Expressions.create(context, "a > 3");
+        EasyMock.expect(defs.getType("a")).andReturn(String.class).anyTimes();
+        EasyMock.replay(resolver, defs);
+        try {
+            Expression<Object, VariableResolver> expr = Expressions.create(context, "a > 3");
+            fail("Expecting BindingException because of incompatible types.");
+        } finally {
+            EasyMock.verify(resolver, defs);
+        }
+        
     }
 
     @Test
     public void testComparingEnums() {
-    	when(defs.getType("a")).thenReturn(Direction.class);
-    	when(defs.getType("b")).thenReturn(Direction.class);
-    	when(resolver.get("a")).thenReturn(Direction.LEFT);
-    	when(resolver.get("b")).thenReturn(Direction.RIGHT);
-
+    	EasyMock.expect(defs.getType("a")).andReturn(Direction.class).anyTimes();
+    	EasyMock.expect(defs.getType("b")).andReturn(Direction.class).anyTimes();
+    	EasyMock.expect(resolver.get("a")).andReturn(Direction.LEFT).anyTimes();
+    	EasyMock.expect(resolver.get("b")).andReturn(Direction.RIGHT).anyTimes();
+    	EasyMock.replay(defs, resolver);
     	assertTrue(condition(context, resolver, "a == a"));
     	assertFalse(condition(context, resolver, "a == b"));
     	assertTrue(condition(context, resolver, "b == b"));
@@ -228,7 +243,8 @@ public class LimboTest {
 
     }
     
-    public enum Direction {
+    public static enum Direction {
+    	
     	LEFT, 
     	RIGHT;
     	

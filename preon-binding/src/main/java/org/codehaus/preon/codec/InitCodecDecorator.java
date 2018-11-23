@@ -24,11 +24,12 @@
  */
 package org.codehaus.preon.codec;
 
+import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.*;
 import org.codehaus.preon.annotation.Init;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.channel.BitChannel;
-import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.descriptor.PassThroughCodecDescriptor2;
 
 import java.io.IOException;
 import java.lang.reflect.AnnotatedElement;
@@ -137,6 +138,11 @@ public class InitCodecDecorator implements CodecDecorator {
         public Class<?> getType() {
             return codec.getType();
         }
+
+        public CodecDescriptor getCodecDescriptor() {
+            return new PassThroughCodecDescriptor2(codec.getCodecDescriptor(), true);
+        }
+
 
         @Override
         public boolean equals(Object obj) {

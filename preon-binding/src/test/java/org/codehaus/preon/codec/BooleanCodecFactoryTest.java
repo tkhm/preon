@@ -24,22 +24,21 @@
  */
 package org.codehaus.preon.codec;
 
+import java.lang.reflect.AnnotatedElement;
+import java.nio.ByteBuffer;
+
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.DecodingException;
 import org.codehaus.preon.annotation.Bound;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.DefaultBitBuffer;
-import org.junit.Before;
-import org.junit.Test;
 
-import java.lang.reflect.AnnotatedElement;
-import java.nio.ByteBuffer;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.easymock.EasyMock.*;
 
-public class BooleanCodecFactoryTest {
+import junit.framework.TestCase;
+
+public class BooleanCodecFactoryTest extends TestCase {
 
     private AnnotatedElement metadata;
 
@@ -47,35 +46,36 @@ public class BooleanCodecFactoryTest {
 
     private BooleanCodecFactory factory;
 
-    @Before
     public void setUp() {
-        metadata = mock(AnnotatedElement.class);
+        metadata = createMock(AnnotatedElement.class);
         factory = new BooleanCodecFactory();
     }
 
-    @Test
     public void testConstructionBooleanPrimitive() {
-        when(metadata.isAnnotationPresent(Bound.class)).thenReturn(true);
+        expect(metadata.isAnnotationPresent(Bound.class)).andReturn(true);
+        replay(metadata);
         assertNotNull(factory.create(metadata, boolean.class, null));
+        verify(metadata);
     }
 
-    @Test
     public void testConstructionBooleanNonPrimitive() {
-        when(metadata.isAnnotationPresent(Bound.class)).thenReturn(true);
+        expect(metadata.isAnnotationPresent(Bound.class)).andReturn(true);
+        replay(metadata);
         assertNotNull(factory.create(metadata, Boolean.class, null));
+        verify(metadata);
     }
 
-    @Test
     public void testConstructionNoBound() {
-        when(metadata.isAnnotationPresent(Bound.class)).thenReturn(false);
+        expect(metadata.isAnnotationPresent(Bound.class)).andReturn(false);
+        replay(metadata);
         assertNull(factory.create(metadata, Boolean.class, null));
+        verify(metadata);
     }
 
-    @Test
     public void testDecoding() throws DecodingException {
         BitBuffer buffer = new DefaultBitBuffer(ByteBuffer.wrap(new byte[]{(byte) 0xF0}));
-        when(metadata.isAnnotationPresent(Bound.class)).thenReturn(true);
-
+        expect(metadata.isAnnotationPresent(Bound.class)).andReturn(true);
+        replay(metadata);
         Codec<Boolean> codec = factory.create(metadata, Boolean.class, null);
         assertTrue(codec.decode(buffer, null, null));
         assertTrue(codec.decode(buffer, null, null));
@@ -85,5 +85,6 @@ public class BooleanCodecFactoryTest {
         assertFalse(codec.decode(buffer, null, null));
         assertFalse(codec.decode(buffer, null, null));
         assertFalse(codec.decode(buffer, null, null));
+        verify(metadata);
     }
 }

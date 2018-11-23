@@ -24,7 +24,9 @@
  */
 package org.codehaus.preon.el.ctx;
 
-public interface VariableDefinitions {
+import org.codehaus.preon.el.Descriptive;
+
+public interface VariableDefinitions extends Descriptive {
 
     String[] getNames();
     

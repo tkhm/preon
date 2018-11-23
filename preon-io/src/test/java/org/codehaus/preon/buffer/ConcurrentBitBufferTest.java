@@ -29,20 +29,20 @@ import java.nio.ByteBuffer;
 
 import edu.umd.cs.mtc.MultithreadedTest;
 import edu.umd.cs.mtc.TestFramework;
+import junit.framework.TestCase;
 
 /**
  * A test suite testing the threadsafe implementation of the {@link BitBuffer}.
  *
  * @author Wilfred Springer
  */
-public class ConcurrentBitBufferTest {
+public class ConcurrentBitBufferTest extends TestCase {
 
     /**
      * Tests that we can safely call the methods of the {@link BitBuffer} concurrently.
      *
      * @throws Throwable If the {@link MultithreadedTest} is throwing exceptions.
      */
-    @org.junit.Test
     public void testConcurrentAccess() throws Throwable {
         TestFramework.runManyTimes(new Test(), 10);
     }

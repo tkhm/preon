@@ -24,6 +24,7 @@
  */
 package org.codehaus.preon.codec;
 
+import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.Builder;
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.DecodingException;
@@ -31,7 +32,6 @@ import org.codehaus.preon.Resolver;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.channel.BoundedBitChannel;
-import org.codehaus.preon.el.Expression;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -41,8 +41,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -77,7 +78,7 @@ public class SlicingCodecTest {
         when(sizeExpr.eval(resolver)).thenReturn(13);
         when(buffer.slice(Mockito.anyInt())).thenReturn(slice);
         when(wrapped.decode(any(BitBuffer.class), any(Resolver.class), any(Builder.class))).thenReturn("DONE");
-        assertEquals(codec.decode(buffer, resolver, builder), "DONE");
+        assertThat(codec.decode(buffer, resolver, builder), is("DONE"));
         verify(sizeExpr).eval(resolver);
         verify(buffer).slice(13);
         verify(wrapped).decode(slice, resolver, builder);
@@ -92,7 +93,24 @@ public class SlicingCodecTest {
         ArgumentCaptor<BitChannel> bitChannelCaptor = ArgumentCaptor.forClass(BitChannel.class);
         verify(wrapped).encode(eq("DONE"), bitChannelCaptor.capture(), eq(resolver));
         verify(sizeExpr).eval(resolver);
-        assertTrue(bitChannelCaptor.getValue() instanceof BoundedBitChannel);
+        assertThat(bitChannelCaptor.getValue(), instanceOf(BoundedBitChannel.class));
         verifyNoMoreInteractions(wrapped, sizeExpr, resolver);
     }
+
+//    @Test
+//    public void testIntegration() throws DecodingException {
+//        byte[] values = { 1, 2, 3, 4 };
+//        Codec<Test1> codec = Codecs.create(Test1.class);
+//        Test1 value = Codecs.decode(codec, values);
+//        assertThat(value.value.length, is(4));
+//    }
+//
+//    public static class Test1 {
+//
+//        @BoundList
+//        @Slice(size = "4")
+//        public byte[] value;
+//
+//    }
+
 }

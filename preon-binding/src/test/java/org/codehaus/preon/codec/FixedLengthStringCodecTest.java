@@ -24,6 +24,7 @@
  */
 package org.codehaus.preon.codec;
 
+import org.codehaus.preon.el.Expression;
 import org.codehaus.preon.Builder;
 import org.codehaus.preon.DecodingException;
 import org.codehaus.preon.Resolver;
@@ -32,20 +33,21 @@ import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.DefaultBitBuffer;
 import org.codehaus.preon.channel.BitChannel;
 import org.codehaus.preon.channel.OutputStreamBitChannel;
-import org.codehaus.preon.el.Expression;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 
+import static org.mockito.Mockito.when;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
 
 @RunWith(org.mockito.runners.MockitoJUnitRunner.class)
 public class FixedLengthStringCodecTest {

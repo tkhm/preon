@@ -24,47 +24,49 @@
  */
 package org.codehaus.preon.buffer;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
+
 import junit.framework.TestCase;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.nio.ByteBuffer;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
 
 
-public class SlicedBitBufferTest {
+public class SlicedBitBufferTest extends TestCase {
 
     private BitBuffer delegate;
 
-    @Before
     public void setUp() {
-        delegate = mock(BitBuffer.class);
+        delegate = createMock(BitBuffer.class);
     }
 
-    @Test
     public void testReading() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(1);
-        byteBuffer.put((byte) 154); // 10011010
-        byteBuffer.rewind(); // reset to zero
-
-        BitBuffer slice = new SlicedBitBuffer(new DefaultBitBuffer(byteBuffer), 5);
-
+        expect(delegate.getBitBufBitSize()).andReturn(32L).anyTimes();
+        expect(delegate.getBitPos()).andReturn(0L).times(2);
+        expect(delegate.readAsBoolean()).andReturn(true);
+        expect(delegate.getBitPos()).andReturn(1L);
+        expect(delegate.readAsBoolean()).andReturn(false);
+        expect(delegate.getBitPos()).andReturn(2L);
+        expect(delegate.readAsBoolean()).andReturn(true);
+        expect(delegate.getBitPos()).andReturn(3L);
+        expect(delegate.readAsBoolean()).andReturn(false);
+        expect(delegate.getBitPos()).andReturn(4L);
+        expect(delegate.readAsBoolean()).andReturn(true);
+        expect(delegate.getBitPos()).andReturn(5L).times(2);
+        replay(delegate);
+        BitBuffer slice = new SlicedBitBuffer(delegate, 5);
         assertTrue(slice.readAsBoolean());
         assertFalse(slice.readAsBoolean());
+        assertTrue(slice.readAsBoolean());
         assertFalse(slice.readAsBoolean());
         assertTrue(slice.readAsBoolean());
-        assertTrue(slice.readAsBoolean());
-
         try {
-            assertTrue(slice.readAsBoolean());
-            fail("Expected ButBufferUnderflow");
-        } catch (BitBufferUnderflowException e) {
-            // ok
+            slice.readAsBoolean();
+            fail();
+        } catch (BitBufferUnderflowException bbue) {
+
         }
+        verify(delegate);
     }
 
 }

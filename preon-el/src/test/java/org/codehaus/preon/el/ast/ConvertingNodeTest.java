@@ -26,11 +26,9 @@ package org.codehaus.preon.el.ast;
 
 import org.junit.Before;
 import org.junit.Test;
-
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import static org.easymock.EasyMock.*;
 
 /**
  * A number of tests for the {@link ConvertingNode}.
@@ -51,7 +49,7 @@ public class ConvertingNodeTest {
      */
     @Before
     public void setUp() {
-        source = mock(Node.class);
+        source = createMock(Node.class);
     }
 
     /**
@@ -59,10 +57,11 @@ public class ConvertingNodeTest {
      */
     @Test
     public void testNonConvertingInteger() {
-        when(source.getType()).thenReturn(String.class);
-        
+        expect(source.getType()).andReturn(String.class);
+        replay(source);
         Node result = ConvertingNode.tryConversionToIntegerNode(source);
         assertFalse(result instanceof ConvertingNode);
+        verify(source);
     }
 
     /**
@@ -71,9 +70,9 @@ public class ConvertingNodeTest {
     @Test
     public void testConvertingInteger() {
         Object context = new Object();
-        when(source.getType()).thenReturn(Byte.class);
-        when(source.eval(context)).thenReturn(new Byte((byte) 3));
-
+        expect(source.getType()).andReturn(Byte.class).times(2);
+        expect(source.eval(context)).andReturn(new Byte((byte) 3));
+        replay(source);
         Node result = ConvertingNode.tryConversionToIntegerNode(source);
         assertTrue(result instanceof ConvertingNode);
         assertEquals(Integer.class, result.getType());
@@ -81,6 +80,7 @@ public class ConvertingNodeTest {
         assertEquals(Integer.class, value.getClass());
         assertEquals(3, ((Integer) value).intValue());
         assertNotNull(value);
+        verify(source);
     }
 
 }

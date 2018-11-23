@@ -51,5 +51,7 @@ public interface CodecFactory {
      * @param context  The context for creating references.
      * @return A new {@link Codec} for the given type.
      */
-    <T> Codec<T> create(AnnotatedElement metadata, Class<T> type, ResolverContext context);
+    <T> Codec<T> create(AnnotatedElement metadata, Class<T> type,
+                        ResolverContext context);
+
 }

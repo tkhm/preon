@@ -24,19 +24,15 @@
  */
 package org.codehaus.preon.el;
 
-import junit.framework.TestCase;
+import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.Resolver;
 import org.codehaus.preon.ResolverContext;
-import org.junit.Before;
-import org.junit.Test;
+import junit.framework.TestCase;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.easymock.EasyMock.*;
 
-public class OuterReferenceTest {
+public class OuterReferenceTest extends TestCase {
 
     private ResolverContext outerContext;
     private ResolverContext originalContext;
@@ -44,21 +40,25 @@ public class OuterReferenceTest {
     private Resolver outerResolver;
     private Resolver originalResolver;
 
-    @Before
     public void setUp() {
-        outerContext = mock(ResolverContext.class);
-        originalContext = mock(ResolverContext.class);
-        sampleReference = mock(Reference.class);
-        outerResolver = mock(Resolver.class);
-        originalResolver = mock(Resolver.class);
+        outerContext = createMock(ResolverContext.class);
+        originalContext = createMock(ResolverContext.class);
+        sampleReference = createMock(Reference.class);
+        outerResolver = createMock(Resolver.class);
+        originalResolver = createMock(Resolver.class);
     }
 
-    @Test
     public void testCreateReference() {
-        when(outerContext.selectAttribute("foobar")).thenReturn(sampleReference);
-        when(originalResolver.get(OuterReference.DEFAULT_OUTER_NAME)).thenReturn(outerResolver);
-        when(sampleReference.resolve(any(Resolver.class))).thenReturn("Wilfred");
-        when(originalResolver.getOriginalResolver()).thenReturn(originalResolver);
+        expect(outerContext.selectAttribute("foobar")).andReturn(
+                sampleReference);
+        expect(originalResolver.get(OuterReference.DEFAULT_OUTER_NAME))
+                .andReturn(outerResolver);
+        expect(sampleReference.resolve(isA(Resolver.class))).andReturn("Wilfred");
+        expect(originalResolver.getOriginalResolver()).andReturn(originalResolver);
+
+        // Replay
+        replay(outerContext, originalContext, sampleReference, outerResolver,
+                originalResolver);
 
         OuterReference reference = new OuterReference(outerContext,
                 originalContext);
@@ -66,16 +66,30 @@ public class OuterReferenceTest {
         assertNotSame(sampleReference, result);
         assertEquals(originalContext, result.getReferenceContext());
         result.resolve(originalResolver);
+
+        // Verify
+        verify(outerContext, originalContext, sampleReference, outerResolver,
+                originalResolver);
     }
 
-    @Test(expected = BindingException.class)
+    @SuppressWarnings("unchecked")
     public void testResolveOuterResolverNull() {
-        when(outerContext.selectAttribute("foobar")).thenReturn(sampleReference);
-        when(originalResolver.get(OuterReference.DEFAULT_OUTER_NAME)).thenReturn(null);
+        expect(outerContext.selectAttribute("foobar")).andReturn(
+                sampleReference);
+        expect(originalResolver.get(OuterReference.DEFAULT_OUTER_NAME))
+                .andReturn(null);
 
-        OuterReference reference = new OuterReference(outerContext, originalContext);
+        // Replay
+        replay(outerContext, originalContext, sampleReference, outerResolver,
+                originalResolver);
+
+        OuterReference reference = new OuterReference(outerContext,
+                originalContext);
         Reference<Resolver> result = reference.selectAttribute("foobar");
-
-        result.resolve(originalResolver);
+        try {
+            result.resolve(originalResolver);
+            fail("BindingException expected");
+        } catch (BindingException expected) {
+        }
     }
 }

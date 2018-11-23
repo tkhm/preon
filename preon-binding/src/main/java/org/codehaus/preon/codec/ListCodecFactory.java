@@ -24,7 +24,30 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Document;
+import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.el.Expressions;
+import org.codehaus.preon.el.Reference;
+import org.codehaus.preon.el.ReferenceContext;
+import nl.flotsam.pecia.Documenter;
+import nl.flotsam.pecia.ParaContents;
+import nl.flotsam.pecia.SimpleContents;
+import org.codehaus.preon.Builder;
+import org.codehaus.preon.Codec;
+import org.codehaus.preon.CodecConstructionException;
+import org.codehaus.preon.CodecDescriptor;
+import org.codehaus.preon.CodecFactory;
+import org.codehaus.preon.Codecs;
+import org.codehaus.preon.DecodingException;
+import org.codehaus.preon.Resolver;
+import org.codehaus.preon.ResolverContext;
 import org.codehaus.preon.annotation.BoundList;
 import org.codehaus.preon.annotation.BoundObject;
 import org.codehaus.preon.annotation.Choices;
@@ -32,15 +55,15 @@ import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.BitBufferUnderflowException;
 import org.codehaus.preon.buffer.SlicedBitBuffer;
 import org.codehaus.preon.channel.BitChannel;
-import org.codehaus.preon.el.*;
+import org.codehaus.preon.descriptor.Documenters;
+import org.codehaus.preon.descriptor.NullCodecDescriptor2;
+import org.codehaus.preon.el.ContextReplacingReference;
 import org.codehaus.preon.util.AnnotationWrapper;
+import org.codehaus.preon.util.CodecDescriptorHolder;
 import org.codehaus.preon.util.EvenlyDistributedLazyList;
+import org.codehaus.preon.util.ParaContentsDocument;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A {@link CodecFactory} capable of supporting Lists. <p/> <p> There are a couple of cases that we need to clarify.
@@ -96,8 +119,13 @@ public class ListCodecFactory implements CodecFactory {
                 Expression<Integer, Resolver> size = getSizeExpression(
                         settings, context);
                 Expression<Integer, Resolver> offsets = null;
-                offsets = Expressions.createInteger(new IndexedResolverContext(context), settings.offset());
-                Codec<T> result = (Codec<T>) new OffsetListCodec(offsets, size, codec);
+                CodecDescriptorHolder holder = new CodecDescriptorHolder();
+                offsets = Expressions.createInteger(new IndexedResolverContext(
+                        context, holder), settings.offset());
+                Codec<T> result = (Codec<T>) new OffsetListCodec(offsets, size,
+                        codec);
+                // TODO:
+                holder.setDescriptor(result.getCodecDescriptor());
                 return result;
             } else {
                 // In this case, there may be a size (number of elements) set,
@@ -124,16 +152,16 @@ public class ListCodecFactory implements CodecFactory {
         } else {
             return null;
         }
-
     }
 
-    private <T> Codec<?> createElementCodec(ResolverContext context, BoundList settings) {
+    private Codec<?> createElementCodec(ResolverContext context, BoundList settings) {
         if (settings.types().length > 0) {
             BoundObject objectSettings = getObjectSettings(settings);
-            return delegate.create(
-                    toAnnotatedElemented(objectSettings),
-                    getAppropriateType(objectSettings.type()),
-                    context);
+            if (objectSettings.type().equals(Void.class)) {
+                return delegate.create(toAnnotatedElemented(objectSettings), Object.class, context);
+            } else {
+                return delegate.create(toAnnotatedElemented(objectSettings), objectSettings.type(), context);
+            }
         } else if (settings.type() != null) {
             return delegate.create(null, settings.type(), context);
         } else {
@@ -149,9 +177,6 @@ public class ListCodecFactory implements CodecFactory {
         }
     }
 
-    private Class<?> getAppropriateType(final Class<?> type) {
-        return type == Void.class ? Object.class : type;
-    }
     /**
      * Returns a {@link BoundObject} annotation containing the properties it shares in common with the {@link BoundList}
      * annotation.
@@ -248,6 +273,58 @@ public class ListCodecFactory implements CodecFactory {
         public Class<?> getType() {
             return List.class;
         }
+
+        public CodecDescriptor getCodecDescriptor() {
+            return new CodecDescriptor() {
+
+                public <C extends SimpleContents<?>> Documenter<C> details(
+                        final String bufferReference) {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target.para().text("The number of elements in ")
+                                    .document(reference(Adjective.THE, false)).text(
+                                    " is ").document(
+                                    Documenters.forExpression(size))
+                                    .text(".")
+                                    .end();
+                            if (!codec.getCodecDescriptor().requiresDedicatedSection()) {
+                                target.document(codec.getCodecDescriptor().details(bufferReference));
+                            }
+                        }
+                    };
+                }
+
+                public String getTitle() {
+                    return null;
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> reference(
+                        final Adjective adjective, final boolean startWithCapital) {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target.text(adjective.asTextPreferA(startWithCapital)).text(
+                                    "list of ").document(
+                                    codec.getCodecDescriptor().reference(
+                                            Adjective.NONE, false));
+                        }
+                    };
+                }
+
+                public boolean requiresDedicatedSection() {
+                    return false;
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> summary() {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target.document(reference(Adjective.A, true)).text(".");
+                        }
+                    };
+                }
+
+            };
+        }
+
     }
 
     /**
@@ -308,6 +385,58 @@ public class ListCodecFactory implements CodecFactory {
         public Class<?> getType() {
             return List.class;
         }
+
+        public CodecDescriptor getCodecDescriptor() {
+            return new CodecDescriptor() {
+
+                public <C extends SimpleContents<?>> Documenter<C> details(
+                        final String bufferReference) {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target
+                                    .para()
+                                    .text(
+                                            "The number of elements in the list is unknown at forehand. The codec will just decode as many elements as the buffer allows to decode.")
+                                    .end();
+                            if (!codec.getCodecDescriptor().requiresDedicatedSection()) {
+                                target.document(codec.getCodecDescriptor().details(bufferReference));
+                            }
+
+                        }
+                    };
+                }
+
+                public String getTitle() {
+                    return null;
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> reference(
+                        final Adjective adjective, final boolean startWithCapital) {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target.text(adjective.asTextPreferA(startWithCapital)).text(
+                                    "list of ").document(
+                                    codec.getCodecDescriptor().reference(
+                                            Adjective.NONE, false));
+                        }
+                    };
+                }
+
+                public boolean requiresDedicatedSection() {
+                    return false;
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> summary() {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target.document(reference(Adjective.A, true)).text(".");
+                        }
+                    };
+                }
+
+            };
+        }
+
     }
 
     /**
@@ -361,6 +490,12 @@ public class ListCodecFactory implements CodecFactory {
         public Class<?> getType() {
             return skipListCodec.getType();
         }
+
+        public CodecDescriptor getCodecDescriptor() {
+            // TODO Auto-generated method stub
+            return new NullCodecDescriptor2();
+        }
+
     }
 
     private static class IndexedResolverContext implements ResolverContext {
@@ -369,13 +504,17 @@ public class ListCodecFactory implements CodecFactory {
 
         final public static String INDEX = "index";
 
-        public IndexedResolverContext(ResolverContext context) {
+        private CodecDescriptor descriptor;
+
+        public IndexedResolverContext(ResolverContext context,
+                                      CodecDescriptor descriptor) {
             this.context = context;
+            this.descriptor = descriptor;
         }
 
         public Reference<Resolver> selectAttribute(String name) {
             if (INDEX.equals(name)) {
-                return new IndexReference(context);
+                return new IndexReference(context, descriptor);
             } else {
                 return new ContextReplacingReference(this, context
                         .selectAttribute(name));
@@ -393,12 +532,21 @@ public class ListCodecFactory implements CodecFactory {
                     .selectItem(index));
         }
 
+        public void document(Document target) {
+            ParaContentsDocument doc = new ParaContentsDocument(target);
+            doc.document(Documenters.forDescriptor(descriptor));
+        }
+
         private static class IndexReference implements Reference<Resolver> {
 
             private ReferenceContext<Resolver> context;
 
-            public IndexReference(ReferenceContext<Resolver> context) {
+            private CodecDescriptor descriptor;
+
+            public IndexReference(ReferenceContext<Resolver> context,
+                                  CodecDescriptor descriptor) {
                 this.context = context;
+                this.descriptor = descriptor;
             }
 
             public ReferenceContext<Resolver> getReferenceContext() {
@@ -424,6 +572,12 @@ public class ListCodecFactory implements CodecFactory {
             public Reference<Resolver> selectItem(
                     Expression<Integer, Resolver> index) {
                 throw new BindingException("No item selection allowed.");
+            }
+
+            public void document(Document target) {
+                target.text("the position of an element in ");
+                ParaContentsDocument doc = new ParaContentsDocument(target);
+                doc.document(Documenters.forDescriptor(descriptor));
             }
 
             public Class<?> getType() {
@@ -559,6 +713,53 @@ public class ListCodecFactory implements CodecFactory {
 
         public Class<?> getType() {
             return List.class;
+        }
+
+        public CodecDescriptor getCodecDescriptor() {
+            return new CodecDescriptor() {
+
+                public <C extends SimpleContents<?>> Documenter<C> details(
+                        final String bufferReference) {
+                    return target -> {
+                        target
+                                .para()
+                                .text("The number of items in the list is ")
+                                .document(Documenters.forExpression(size))
+                                .text(
+                                        ". The position of an item in the encoded representation is based on its index in the list.")
+                                .text(
+                                        " Given an item's index, it's position is: ")
+                                .document(
+                                        Documenters.forExpression(offsets))
+                                .text(".").end();
+                        if (!codec.getCodecDescriptor().requiresDedicatedSection()) {
+                            target.document(codec.getCodecDescriptor().details(bufferReference));
+                        }
+
+                    };
+                }
+
+                public String getTitle() {
+                    return null;
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> reference(
+                        final Adjective adjective, final boolean startWithCapital) {
+                    return target -> target.text(adjective.asTextPreferA(startWithCapital)).text(
+                            "list of ").document(
+                            codec.getCodecDescriptor().reference(
+                                    Adjective.NONE, false));
+                }
+
+                public boolean requiresDedicatedSection() {
+                    return false;
+                }
+
+                public <C extends ParaContents<?>> Documenter<C> summary() {
+                    return target -> target.document(reference(Adjective.A, true)).text(".");
+                }
+
+            };
         }
     }
 

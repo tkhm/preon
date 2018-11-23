@@ -24,86 +24,40 @@
  */
 package org.codehaus.preon.binding;
 
-import org.codehaus.preon.Codec;
-import org.codehaus.preon.DecodingException;
-import org.codehaus.preon.annotation.BoundNumber;
-import org.codehaus.preon.buffer.BitBufferUnderflowException;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
 import java.lang.reflect.Field;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.codehaus.preon.Codec;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class StandardBindingFactoryTest {
+    
+    public static class Spam {
+        private int eggs;
+        
+        public int getEggs() {
+            return eggs;
+        }
+    }
+    
+    @Mock
+    private Codec<Spam> codec;
 
     private StandardBindingFactory factory;
 
-    private Codec<Spam> codec;
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @Before
-    @SuppressWarnings("unchecked")
-    public void setUp() {
-        codec = mock(Codec.class);
+    public void createFactory() {
         factory = new StandardBindingFactory();
     }
 
     @Test
     public void shouldHaveAccessToNonPublicFields() throws Exception {
         Field field = Spam.class.getDeclaredField("eggs");
-        Binding binding = factory.create(null, field, codec, null);
+        Binding binding = factory.create(null, field, codec, null, null);
         binding.save(new Spam(), null, null);
-    }
-
-    @Test
-    public void testBitBufferUnderflowWithDetails() throws Exception {
-        doTestDecodingExceptionHandling(new BitBufferUnderflowException(17, 3));
-    }
-
-    @Test
-    public void testAnyExceptionWithDetails() throws Exception {
-        doTestDecodingExceptionHandling(new IllegalArgumentException("Junit illegal argument"));
-    }
-
-    private void doTestDecodingExceptionHandling(Throwable t) throws Exception {
-        expectedException.expect(DecodingException.class);
-        expectedException.expectMessage("Error decoding field [eggs] in type [Spam]");
-        expectedException.expectCause(new CauseMatcher(t.getClass()));
-        Field field = Spam.class.getDeclaredField("eggs");
-        when(codec.decode(any(), any(), any())).thenThrow(t);
-        factory.create(null, field, codec, null).load(new Spam(), null, null, null);
-    }
-
-    public static class Spam {
-        @BoundNumber(size = "16")
-        private int eggs;
-    }
-
-    private static class CauseMatcher extends TypeSafeMatcher<Throwable> {
-
-        private Class<? extends Throwable> expected;
-
-        public CauseMatcher(Class<? extends Throwable> expected) {
-            this.expected = expected;
-        }
-
-        @Override
-        protected boolean matchesSafely(Throwable throwable) {
-            return throwable.getClass().isAssignableFrom(expected);
-        }
-
-        @Override
-        public void describeTo(Description description) {
-            description.appendText("Expects ").appendText(expected.getClass().getName());
-        }
     }
 }

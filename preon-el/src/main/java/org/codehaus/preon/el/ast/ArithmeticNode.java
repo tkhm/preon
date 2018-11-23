@@ -24,11 +24,13 @@
  */
 package org.codehaus.preon.el.ast;
 
+import java.util.Set;
+
 import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
-
-import java.util.Set;
+import org.codehaus.preon.el.util.StringBuilderDocument;
 
 /**
  * A representation of an arithmetic node in the tree representing an
@@ -65,25 +67,62 @@ public class ArithmeticNode<E> extends AbstractNode<Integer, E> {
             <E> int eval(E context, Node<Integer, E> a, Node<Integer, E> b) {
                 return (int) Math.pow(a.eval(context).intValue(), b.eval(context).intValue());
             }
+
+            <E> void document(Node<Integer, E> a, Node<Integer, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" to the power of ");
+                b.document(target);
+            }
         },
         div {
             <E> int eval(E context, Node<Integer, E> a, Node<Integer, E> b) {
                 return a.eval(context).intValue() / b.eval(context).intValue();
+            }
+
+            <E> void document(Node<Integer, E> a, Node<Integer, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" divided by ");
+                b.document(target);
             }
         },
         plus {
             <E> int eval(E context, Node<Integer, E> a, Node<Integer, E> b) {
                 return a.eval(context).intValue() + b.eval(context).intValue();
             }
+
+            <E> void document(Node<Integer, E> a, Node<Integer, E> b,
+                    org.codehaus.preon.el.Document target) {
+                target.text("the sum of ");
+                a.document(target);
+                target.text(" and ");
+                b.document(target);
+            }
         },
         minus {
             <E> int eval(E context, Node<Integer, E> a, Node<Integer, E> b) {
                 return a.eval(context).intValue() - b.eval(context).intValue();
             }
+
+            <E> void document(Node<Integer, E> a, Node<Integer, E> b,
+                    org.codehaus.preon.el.Document target) {
+                target.text("the difference between ");
+                a.document(target);
+                target.text(" and ");
+                b.document(target);
+            }
         },
         mult {
             <E> int eval(E context, Node<Integer, E> a, Node<Integer, E> b) {
                 return a.eval(context).intValue() * b.eval(context).intValue();
+            }
+
+            <E> void document(Node<Integer, E> a, Node<Integer, E> b,
+                    org.codehaus.preon.el.Document target) {
+                a.document(target);
+                target.text(" times ");
+                b.document(target);
             }
         };
 
@@ -91,7 +130,7 @@ public class ArithmeticNode<E> extends AbstractNode<Integer, E> {
          * Evaluates application of the infix operator on the two terms passed
          * in.
          * 
-         * @param context
+         * @param resolver
          *            The object capable of resolving variable references.
          * @param lhs
          *            The left-hand side of the expression.
@@ -100,6 +139,21 @@ public class ArithmeticNode<E> extends AbstractNode<Integer, E> {
          * @return An integer value.
          */
         abstract <E> int eval(E context, Node<Integer, E> lhs, Node<Integer, E> rhs);
+
+        /**
+         * writes the expression.
+         * 
+         * @param descriptor
+         *            The object capable of describing variable references.
+         * @param lhs
+         *            The left-hand side of the expression.
+         * @param rhs
+         *            The right-hand side of the expression.
+         * @param target
+         *            The object receiving the description.
+         */
+        abstract <E> void document(Node<Integer, E> lhs, Node<Integer, E> rhs,
+                org.codehaus.preon.el.Document target);
     }
 
     /**
@@ -150,7 +204,10 @@ public class ArithmeticNode<E> extends AbstractNode<Integer, E> {
             throws BindingException {
         if (!Integer.class.isAssignableFrom(node.getType())
                 && !int.class.isAssignableFrom(node.getType())) {
-            throw new BindingException("Reference ADD_LABEL_HERE does not resolve to integer.");
+            StringBuilder builder = new StringBuilder();
+            node.document(new StringBuilderDocument(builder));
+            throw new BindingException("Reference " + builder.toString()
+                    + " does not resolve to integer.");
         } else {
             return (Node<Integer, E>) node;
         }
@@ -204,6 +261,15 @@ public class ArithmeticNode<E> extends AbstractNode<Integer, E> {
      */
     public Integer eval(E context) {
         return operator.eval(context, lhs, rhs);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
+     */
+    public void document(Document target) {
+        operator.document(lhs, rhs, target);
     }
 
     /*

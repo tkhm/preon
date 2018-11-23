@@ -24,18 +24,18 @@
  */
 package org.codehaus.preon.el.ctx;
 
+import static org.junit.Assert.*;
 import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
+import org.codehaus.preon.el.util.StringBuilderDocument;
+
+import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Date;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.easymock.EasyMock.*;
 
 /**
  * A collection of tests for the {@link MultiReference}.
@@ -55,94 +55,179 @@ public class MultiReferenceTest {
 
     @Before
     public void setUp() {
-        this.reference1 = mock(Reference.class);
-        this.reference2 = mock(Reference.class);
-        this.reference3 = mock(Reference.class);
-        this.context = mock(ReferenceContext.class);
+        this.reference1 = createMock(Reference.class);
+        this.reference2 = createMock(Reference.class);
+        this.reference3 = createMock(Reference.class);
+        this.context = createMock(ReferenceContext.class);
     }
 
     @Test
     public void testResolution() {
         Object runtimeContext = new Object();
         Object result = new Object();
-        when(reference1.getReferenceContext()).thenReturn(context);
-        when(reference2.getReferenceContext()).thenReturn(context);
-        when(reference1.resolve(runtimeContext)).thenReturn(result);
-        when(reference1.getType()).thenReturn(String.class);
-        when(reference2.getType()).thenReturn(Date.class);
-
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference1.resolve(runtimeContext)).andReturn(result);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(Date.class);
+        replay(reference1, reference2);
         MultiReference multi = new MultiReference(reference1, reference2);
         assertEquals(result, multi.resolve(runtimeContext));
+        verify(reference1, reference2);
     }
 
     @Test
     public void testResolution2ndAttempt() {
         Object runtimeContext = new Object();
         Object result = new Object();
-        when(reference1.getReferenceContext()).thenReturn(context);
-        when(reference2.getReferenceContext()).thenReturn(context);
-        when(reference1.resolve(runtimeContext)).thenThrow(new BindingException("Not found."));
-        when(reference2.resolve(runtimeContext)).thenReturn(result);
-        when(reference1.getType()).thenReturn(String.class);
-        when(reference2.getType()).thenReturn(String.class);
-
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference1.resolve(runtimeContext)).andThrow(new BindingException("Not found."));
+        expect(reference2.resolve(runtimeContext)).andReturn(result);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(String.class);
+        replay(reference1, reference2);
         MultiReference multi = new MultiReference(reference1, reference2);
         assertEquals(result, multi.resolve(runtimeContext));
+        verify(reference1, reference2);
     }
 
     @Test(expected=BindingException.class)
     public void testFailedResolution() {
         Object runtimeContext = new Object();
         Object result = new Object();
-        when(reference1.getReferenceContext()).thenReturn(context);
-        when(reference2.getReferenceContext()).thenReturn(context);
-        when(reference1.getType()).thenReturn(String.class);
-        when(reference2.getType()).thenReturn(String.class);
-        when(reference1.resolve(runtimeContext)).thenThrow(new BindingException("Not found."));
-        when(reference2.resolve(runtimeContext)).thenThrow(new BindingException("Not found."));
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(String.class);
+        expect(reference1.resolve(runtimeContext)).andThrow(new BindingException("Not found."));
+        expect(reference2.resolve(runtimeContext)).andThrow(new BindingException("Not found."));
+        replay(reference1, reference2);
         MultiReference multi = new MultiReference(reference1, reference2);
-
-        multi.resolve(runtimeContext);
+        try {
+            multi.resolve(runtimeContext);
+        } finally {
+            verify(reference1, reference2);
+        }
     }
 
     @Test
     public void testSelectIndex() {
         String index = "pi";
-        Reference selected1 = mock(Reference.class);
-        Reference selected2 = mock(Reference.class);
-        when(reference1.getReferenceContext()).thenReturn(context);
-        when(reference2.getReferenceContext()).thenReturn(context);
-        when(reference1.getType()).thenReturn(String.class);
-        when(reference2.getType()).thenReturn(String.class);
-        when(selected1.getType()).thenReturn(String.class);
-        when(selected2.getType()).thenReturn(String.class);
-        when(reference1.selectItem(index)).thenReturn(selected1);
-        when(reference2.selectItem(index)).thenReturn(selected2);
-        when(selected1.getReferenceContext()).thenReturn(context);
-        when(selected2.getReferenceContext()).thenReturn(context);
-
+        Reference selected1 = createMock(Reference.class);
+        Reference selected2 = createMock(Reference.class);
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(String.class);
+        expect(selected1.getType()).andReturn(String.class);
+        expect(selected2.getType()).andReturn(String.class);
+        expect(reference1.selectItem(index)).andReturn(selected1);
+        expect(reference2.selectItem(index)).andReturn(selected2);
+        expect(selected1.getReferenceContext()).andReturn(context);
+        expect(selected2.getReferenceContext()).andReturn(context);
+        replay(reference1, reference2, selected1, selected2);
         MultiReference multi = new MultiReference(reference1, reference2);
         assertNotNull(multi.selectItem(index));
-
+        verify(reference1, reference2, selected1, selected2);
     }
 
     @Test
     public void testSelectProperty() {
         String propertyName = "pi";
-        Reference selected1 = mock(Reference.class);
-        Reference selected2 = mock(Reference.class);
-        when(reference1.getType()).thenReturn(String.class);
-        when(reference2.getType()).thenReturn(String.class);
-        when(selected1.getType()).thenReturn(String.class);
-        when(selected2.getType()).thenReturn(String.class);
-        when(reference1.getReferenceContext()).thenReturn(context);
-        when(reference2.getReferenceContext()).thenReturn(context);
-        when(reference1.selectAttribute(propertyName)).thenReturn(selected1);
-        when(reference2.selectAttribute(propertyName)).thenReturn(selected2);
-        when(selected1.getReferenceContext()).thenReturn(context);
-        when(selected2.getReferenceContext()).thenReturn(context);
-
+        Reference selected1 = createMock(Reference.class);
+        Reference selected2 = createMock(Reference.class);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(String.class);
+        expect(selected1.getType()).andReturn(String.class);
+        expect(selected2.getType()).andReturn(String.class);
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference1.selectAttribute(propertyName)).andReturn(selected1);
+        expect(reference2.selectAttribute(propertyName)).andReturn(selected2);
+        expect(selected1.getReferenceContext()).andReturn(context);
+        expect(selected2.getReferenceContext()).andReturn(context);
+        replay(reference1, reference2, selected1, selected2);
         MultiReference multi = new MultiReference(reference1, reference2);
         assertNotNull(multi.selectAttribute(propertyName));
+        verify(reference1, reference2, selected1, selected2);
     }
+
+    @Test
+    public void testSelectNonExistingProperty() {
+        StringBuilder builder = new StringBuilder();
+        Document document = new StringBuilderDocument(builder);
+        String propertyName = "pi";
+        Reference selected1 = createMock(Reference.class);
+        Reference selected2 = createMock(Reference.class);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(String.class);
+        expect(selected1.getType()).andReturn(String.class);
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference1.selectAttribute(propertyName)).andReturn(selected1);
+        expect(reference2.selectAttribute(propertyName)).andThrow(new BindingException("No property pi"));
+        selected1.document(document);
+        expect(selected1.getReferenceContext()).andReturn(context);
+        replay(reference1, reference2, selected1, selected2);
+        MultiReference multi = new MultiReference(reference1, reference2);
+        Reference selected = multi.selectAttribute(propertyName);
+        assertNotNull(selected);
+        selected.document(document);
+        verify(reference1, reference2, selected1, selected2);
+    }
+
+    @Test
+    public void testNarrow() {
+        StringBuilder builder = new StringBuilder();
+        Document document = new StringBuilderDocument(builder);
+        String propertyName = "pi";
+        expect(reference1.narrow(String.class)).andReturn(reference1);
+        expect(reference2.narrow(String.class)).andReturn(reference2);
+        expect(reference1.getType()).andReturn(String.class).times(2);
+        expect(reference2.getType()).andReturn(String.class).times(2);
+        expect(reference1.getReferenceContext()).andReturn(context).times(2);
+        expect(reference2.getReferenceContext()).andReturn(context).times(2);
+        replay(reference1, reference2, context);
+        MultiReference multi = new MultiReference(reference1, reference2);
+        multi.narrow(String.class);
+        verify(reference1, reference2, context);
+    }
+
+    @Test
+    public void testNarrowPartly() {
+        StringBuilder builder = new StringBuilder();
+        Document document = new StringBuilderDocument(builder);
+        String propertyName = "pi";
+        expect(reference1.narrow(String.class)).andReturn(reference1);
+        expect(reference2.narrow(String.class)).andReturn(null);
+        expect(reference1.getType()).andReturn(String.class).times(2);
+        expect(reference2.getType()).andReturn(String.class).times(1);
+        expect(reference1.getReferenceContext()).andReturn(context).times(2);
+        expect(reference2.getReferenceContext()).andReturn(context).times(1);
+        replay(reference1, reference2, context);
+        MultiReference multi = new MultiReference(reference1, reference2);
+        multi.narrow(String.class);
+        verify(reference1, reference2, context);
+    }
+
+    @Test
+    public void testDocumentation() {
+        StringBuilderDocument document = new StringBuilderDocument();
+        expect(reference1.getReferenceContext()).andReturn(context);
+        expect(reference2.getReferenceContext()).andReturn(context);
+        expect(reference3.getReferenceContext()).andReturn(context);
+        expect(reference1.getType()).andReturn(String.class);
+        expect(reference2.getType()).andReturn(String.class);
+        expect(reference3.getType()).andReturn(String.class);
+        reference1.document(document);
+        reference2.document(document);
+        reference3.document(document);
+        replay(reference1, reference2, reference3);
+        MultiReference multi = new MultiReference(reference1, reference2, reference3);
+        multi.document(document);
+        System.out.println(document.toString());
+        verify(reference1, reference2, reference3);
+    }
+
 }

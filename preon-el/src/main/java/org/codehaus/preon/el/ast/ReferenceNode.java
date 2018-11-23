@@ -24,13 +24,14 @@
  */
 package org.codehaus.preon.el.ast;
 
+import java.util.Collections;
+import java.util.Set;
+
+import org.codehaus.preon.el.Document;
 import org.codehaus.preon.el.Reference;
 import org.codehaus.preon.el.ReferenceContext;
 import org.codehaus.preon.el.ctx.ConvertingReference;
 import org.codehaus.preon.el.util.ClassUtils;
-
-import java.util.Collections;
-import java.util.Set;
 
 public class ReferenceNode<T, E> implements Node<T, E> {
 
@@ -92,6 +93,10 @@ public class ReferenceNode<T, E> implements Node<T, E> {
 
     public boolean isParameterized() {
         return true;
+    }
+
+    public void document(Document target) {
+        reference.document(target);
     }
 
     /**

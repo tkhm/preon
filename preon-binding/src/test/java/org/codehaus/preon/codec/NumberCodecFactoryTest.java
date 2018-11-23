@@ -24,6 +24,15 @@
  */
 package org.codehaus.preon.codec;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+
+import java.lang.reflect.AnnotatedElement;
+
+import junit.framework.TestCase;
 import org.codehaus.preon.Codec;
 import org.codehaus.preon.CodecFactory;
 import org.codehaus.preon.DecodingException;
@@ -32,23 +41,13 @@ import org.codehaus.preon.annotation.Bound;
 import org.codehaus.preon.annotation.BoundNumber;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.ByteOrder;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
-import java.lang.reflect.AnnotatedElement;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * A collection of tests for the {@link org.codehaus.preon.codec.NumericCodec.Factory}.
  *
  * @author Wilfred Springer
  */
-public class NumberCodecFactoryTest {
+public class NumberCodecFactoryTest extends TestCase {
 
     private AnnotatedElement metadata;
 
@@ -64,22 +63,19 @@ public class NumberCodecFactoryTest {
 
     private NumericCodec.Factory factory = new NumericCodec.Factory();
 
-    @Before
     public void setUp() {
-        metadata = mock(AnnotatedElement.class);
-        delegate = mock(CodecFactory.class);
-        buffer = mock(BitBuffer.class);
-        resolver = mock(Resolver.class);
-        bound = mock(Bound.class);
-        boundNumber = mock(BoundNumber.class);
+        metadata = createMock(AnnotatedElement.class);
+        delegate = createMock(CodecFactory.class);
+        buffer = createMock(BitBuffer.class);
+        resolver = createMock(Resolver.class);
+        bound = createMock(Bound.class);
+        boundNumber = createMock(BoundNumber.class);
     }
 
-    @Test
     public void testDecodingHex() {
         System.out.println(Long.parseLong("CAFEBABE", 16));
     }
 
-    @Test
     public void testDecodingInteger() throws DecodingException {
         Kit<Integer> kit = new IntegerKit();
         kit.test(ByteOrder.BigEndian, "", 32, 256, null, false);
@@ -88,7 +84,6 @@ public class NumberCodecFactoryTest {
         kit.test(ByteOrder.BigEndian, "8", 8, 256, null, false);
     }
 
-    @Test
     public void testDecodingShort() throws DecodingException {
         Kit<Short> kit = new ShortKit();
         kit.test(ByteOrder.BigEndian, "", 16, (short) 256, null, false);
@@ -99,7 +94,6 @@ public class NumberCodecFactoryTest {
         kit.test(ByteOrder.LittleEndian, "", 16, (short) 256, "25", true);
     }
 
-    @Test
     public void testDecodingByte() throws DecodingException {
         Kit<Byte> kit = new ByteKit();
         kit.test(ByteOrder.BigEndian, "", 8, (byte) 256, null, false);
@@ -108,7 +102,6 @@ public class NumberCodecFactoryTest {
         kit.test(ByteOrder.BigEndian, "8", 8, (byte) 256, null, false);
     }
 
-    @Test
     public void testDecodingLong() throws DecodingException {
         Kit<Long> kit = new LongKit();
         kit.test(ByteOrder.BigEndian, "", 64, 256L, null, false);
@@ -117,7 +110,6 @@ public class NumberCodecFactoryTest {
         kit.test(ByteOrder.BigEndian, "8", 8, 256L, null, false);
     }
 
-    @Test
     public void testDecodingFloat() throws DecodingException {
         Kit<Float> kit = new FloatKit();
         kit.test(ByteOrder.BigEndian, "", 32, 5.0f, null, false);
@@ -126,7 +118,6 @@ public class NumberCodecFactoryTest {
         kit.test(ByteOrder.BigEndian, "", 32, Float.NaN, null, false);
     }
 
-    @Test
     public void testDecodingDouble() throws DecodingException {
         Kit<Double> kit = new DoubleKit();
         kit.test(ByteOrder.BigEndian, "", 64, 5.0d, null, false);
@@ -136,14 +127,12 @@ public class NumberCodecFactoryTest {
         kit.test(ByteOrder.BigEndian, "32", 32, 5.0d, null, false);
     }
 
-    @Test
     public void testDecodingWithTypeOverrideDoubleInteger() throws DecodingException {
         Kit<Integer> kit = new DoubleAsIntegerKit();
         kit.test(ByteOrder.BigEndian, "", 64, 5, Double.class, null, false);
         kit.test(ByteOrder.BigEndian, "32", 32, 5, Double.class, null, false);
     }
 
-    @Test
     public void testDecodingWithTypeOverrideIntegerDouble() throws DecodingException {
         Kit<Double> kit = new IntegerAsDoubleKit();
         kit.test(ByteOrder.BigEndian, "", 32, 5.0, Integer.class, null, false);
@@ -160,20 +149,26 @@ public class NumberCodecFactoryTest {
         @SuppressWarnings("unchecked")
         public void test(ByteOrder endian, String size, int readSize, T value, Class<? extends Number> typeOverride,
                          String match, boolean expectException) throws DecodingException {
-            when(metadata.isAnnotationPresent(BoundNumber.class))
-                    .thenReturn(true);
-            when(metadata.getAnnotation(BoundNumber.class))
-                    .thenReturn(boundNumber);
-            Mockito.<Class<?>>when(boundNumber.type()).thenReturn(typeOverride);
-            when(metadata.isAnnotationPresent(Bound.class)).thenReturn(false);
-            when(metadata.isAnnotationPresent(BoundNumber.class)).thenReturn(true);
-            when(metadata.getAnnotation(BoundNumber.class)).thenReturn(boundNumber);
-            when(boundNumber.byteOrder()).thenReturn(endian);
-            when(boundNumber.size()).thenReturn(size);
-            when(boundNumber.match()).thenReturn(match == null ? "" : match);
+            expect(metadata.isAnnotationPresent(BoundNumber.class))
+                    .andReturn(true);
+            expect(metadata.getAnnotation(BoundNumber.class))
+                    .andReturn(boundNumber);
+            expect(boundNumber.type()).andStubReturn(typeOverride);
+            expect(metadata.isAnnotationPresent(Bound.class))
+                    .andReturn(false);
+            expect(metadata.isAnnotationPresent(BoundNumber.class))
+                    .andReturn(true);
+            expect(metadata.getAnnotation(BoundNumber.class))
+                    .andReturn(boundNumber);
+            expect(boundNumber.byteOrder()).andReturn(endian);
+            expect(boundNumber.size()).andReturn(size);
+            expect(boundNumber.match()).andReturn(
+                    match == null ? "" : match).anyTimes();
             verifyRead(readSize, endian, value);
-
-            Codec<T> codec = (Codec<T>) factory.create(metadata, value.getClass(), null);
+            replay(metadata, delegate, buffer, resolver, bound,
+                    boundNumber);
+            Codec<T> codec = (Codec<T>) factory.create(metadata, value
+                    .getClass(), null);
             try {
                 T result = codec.decode(buffer, resolver, null);
                 if (expectException) {
@@ -184,6 +179,10 @@ public class NumberCodecFactoryTest {
                 if (!expectException)
                     fail("Unexpected exception: " + de.getMessage());
             }
+            verify(metadata, delegate, buffer, resolver, bound,
+                    boundNumber);
+            reset(metadata, delegate, buffer, resolver, bound,
+                    boundNumber);
         }
 
         public abstract void verifyRead(int readSize, ByteOrder endian, T value);
@@ -198,8 +197,8 @@ public class NumberCodecFactoryTest {
 
         @Override
         public void verifyRead(int readSize, ByteOrder endian, Integer value) {
-            when(buffer.readAsInt(readSize, endian))
-                    .thenReturn(value);
+            expect(buffer.readAsInt(readSize, endian))
+                    .andReturn(value);
         }
     }
 
@@ -207,7 +206,7 @@ public class NumberCodecFactoryTest {
 
         @Override
         public void verifyRead(int readSize, ByteOrder endian, Long value) {
-            when(buffer.readAsLong(readSize, endian)).thenReturn(
+            expect(buffer.readAsLong(readSize, endian)).andReturn(
                     value);
         }
     }
@@ -216,7 +215,7 @@ public class NumberCodecFactoryTest {
 
         @Override
         public void verifyRead(int readSize, ByteOrder endian, Short value) {
-            when(buffer.readAsShort(readSize, endian)).thenReturn(
+            expect(buffer.readAsShort(readSize, endian)).andReturn(
                     value);
         }
 
@@ -226,7 +225,7 @@ public class NumberCodecFactoryTest {
 
         @Override
         public void verifyRead(int readSize, ByteOrder endian, Float value) {
-            when(buffer.readAsInt(readSize, endian)).thenReturn(
+            expect(buffer.readAsInt(readSize, endian)).andReturn(
                     Float.floatToIntBits(value));
         }
 
@@ -236,7 +235,7 @@ public class NumberCodecFactoryTest {
 
         @Override
         public void verifyRead(int readSize, ByteOrder endian, Double value) {
-            when(buffer.readAsLong(readSize, endian)).thenReturn(
+            expect(buffer.readAsLong(readSize, endian)).andReturn(
                     Double.doubleToLongBits(value));
         }
 
@@ -246,7 +245,7 @@ public class NumberCodecFactoryTest {
 
         @Override
         public void verifyRead(int readSize, ByteOrder endian, Byte value) {
-            when(buffer.readAsByte(readSize, endian)).thenReturn(
+            expect(buffer.readAsByte(readSize, endian)).andReturn(
                     value);
         }
 

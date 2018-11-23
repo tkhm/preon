@@ -24,20 +24,33 @@
  */
 package org.codehaus.preon.codec;
 
-import org.codehaus.preon.*;
+import java.io.IOException;
+import java.lang.reflect.AnnotatedElement;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.codehaus.preon.el.Document;
+import org.codehaus.preon.el.Expression;
+import org.codehaus.preon.el.Expressions;
+import org.codehaus.preon.el.util.Converters;
+import org.codehaus.preon.el.util.StringBuilderDocument;
+import nl.flotsam.pecia.Documenter;
+import nl.flotsam.pecia.ParaContents;
+import nl.flotsam.pecia.SimpleContents;
+import org.codehaus.preon.Builder;
+import org.codehaus.preon.Codec;
+import org.codehaus.preon.CodecDescriptor;
+import org.codehaus.preon.CodecFactory;
+import org.codehaus.preon.DecodingException;
+import org.codehaus.preon.Resolver;
+import org.codehaus.preon.ResolverContext;
 import org.codehaus.preon.annotation.Bound;
 import org.codehaus.preon.annotation.BoundNumber;
 import org.codehaus.preon.buffer.BitBuffer;
 import org.codehaus.preon.buffer.ByteOrder;
 import org.codehaus.preon.channel.BitChannel;
-import org.codehaus.preon.el.Expression;
-import org.codehaus.preon.el.Expressions;
-import org.codehaus.preon.el.util.Converters;
-
-import java.io.IOException;
-import java.lang.reflect.AnnotatedElement;
-import java.util.HashMap;
-import java.util.Map;
+import org.codehaus.preon.descriptor.Documenters;
+import org.codehaus.preon.descriptor.NullDocumenter;
 
 /** The {@link org.codehaus.preon.Codec} capable of decoding numeric types in a sensible way. */
 public class NumericCodec implements Codec<Object> {
@@ -69,8 +82,7 @@ public class NumericCodec implements Codec<Object> {
     private Expression<Integer, Resolver> matchExpr;
 
     public NumericCodec(Expression<Integer, Resolver> sizeExpr,
-                        ByteOrder byteOrder,
-                        NumericType type,
+                        ByteOrder byteOrder, NumericType type,
                         Expression<Integer, Resolver> matchExpr) {
         this.sizeExpr = sizeExpr;
         this.byteOrder = byteOrder;
@@ -78,16 +90,21 @@ public class NumericCodec implements Codec<Object> {
         this.matchExpr = matchExpr;
     }
 
-    public Object decode(BitBuffer buffer, Resolver resolver, Builder builder) throws DecodingException {
+    public Object decode(BitBuffer buffer, Resolver resolver,
+                         Builder builder) throws DecodingException {
         int size = ((Number) (this.sizeExpr.eval(resolver))).intValue();
         Object result = type.decode(buffer, size, byteOrder);
         if (matchExpr != null) {
             if (!matchExpr.eval(resolver).equals(Converters.toInt(result))) {
                 StringBuilder stringBuilder = new StringBuilder();
+                Document document = new StringBuilderDocument(stringBuilder);
                 if (matchExpr.isParameterized()) {
-                    stringBuilder.append("Expected different value than " + result);
+                    stringBuilder.append("Expected different value than "
+                            + result);
                 } else {
-                    stringBuilder.append("Expected ADD_LABEL_HERE but got ");
+                    stringBuilder.append("Expected ");
+                    matchExpr.document(document);
+                    stringBuilder.append(" but got ");
                     stringBuilder.append(result);
                 }
                 throw new DecodingException(stringBuilder.toString());
@@ -110,6 +127,72 @@ public class NumericCodec implements Codec<Object> {
 
     public Class<?> getType() {
         return type.getType();
+    }
+
+    public CodecDescriptor getCodecDescriptor() {
+        return new CodecDescriptor() {
+
+            public <C extends SimpleContents<?>> Documenter<C> details(
+                    String bufferReference) {
+                if (sizeExpr.isParameterized()) {
+                    return new Documenter<C>() {
+                        public void document(C target) {
+                            target
+                                    .para()
+                                    .text("The number of bits is ")
+                                    .document(
+                                            Documenters
+                                                    .forExpression(sizeExpr))
+                                    .text(".").end();
+                        }
+                    };
+                } else {
+                    return new NullDocumenter<C>();
+                }
+            }
+
+            public String getTitle() {
+                return null;
+            }
+
+            public <C extends ParaContents<?>> Documenter<C> reference(
+                    final Adjective adjective, final boolean startWithCapital) {
+                return new Documenter<C>() {
+                    public void document(C target) {
+                        if (sizeExpr.isParameterized()) {
+                            target.text(adjective.asTextPreferAn(startWithCapital)).text(
+                                    " integer value (").document(
+                                    Documenters.forByteOrder(byteOrder)).text(
+                                    ")");
+                        } else {
+                            target
+                                    .text(adjective.asTextPreferA(startWithCapital))
+                                    .text(" ")
+                                    .document(
+                                            Documenters
+                                                    .forExpression(sizeExpr))
+                                    .text("-bit integer value (").document(
+                                    Documenters
+                                            .forByteOrder(byteOrder))
+                                    .text(")");
+                        }
+                    }
+                };
+            }
+
+            public boolean requiresDedicatedSection() {
+                return false;
+            }
+
+            public <C extends ParaContents<?>> Documenter<C> summary() {
+                return new Documenter<C>() {
+                    public void document(C target) {
+                        target.document(reference(Adjective.A, true)).text(".");
+                    }
+                };
+            }
+
+        };
     }
 
     public String toString() {

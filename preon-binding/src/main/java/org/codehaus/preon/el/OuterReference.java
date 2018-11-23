@@ -129,6 +129,23 @@ public class OuterReference implements Reference<Resolver> {
                 actual, null);
     }
 
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.Descriptive#document(org.codehaus.preon.el.Document)
+     */
+
+    public void document(Document target) {
+        target.text("the ");
+        outerContext.document(target);
+        target.text(" containing the ");
+        originalContext.document(target);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see org.codehaus.preon.el.Reference#getReferenceContext()
+     */
+
     public ReferenceContext<Resolver> getReferenceContext() {
         return outerContext;
     }

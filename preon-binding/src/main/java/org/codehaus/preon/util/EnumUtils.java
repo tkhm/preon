@@ -24,12 +24,12 @@
  */
 package org.codehaus.preon.util;
 
-import org.codehaus.preon.annotation.BoundEnumOption;
-
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.codehaus.preon.annotation.BoundEnumOption;
 
 public class EnumUtils {
 

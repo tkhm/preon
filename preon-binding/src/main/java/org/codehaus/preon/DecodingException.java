@@ -24,10 +24,10 @@
  */
 package org.codehaus.preon;
 
-import org.codehaus.preon.buffer.BitBuffer;
-import org.codehaus.preon.el.BindingException;
-
 import java.io.UnsupportedEncodingException;
+
+import org.codehaus.preon.el.BindingException;
+import org.codehaus.preon.buffer.BitBuffer;
 
 /**
  * The exception thrown when the {@link Codec} fails to decode a value from the {@link BitBuffer}. See JavaDoc comments
@@ -71,13 +71,4 @@ public class DecodingException extends CodecException {
         super("Failed to create instance of " + type.getSimpleName(), ie);
     }
 
-    /**
-     * All-purpose constructor for custom error message and an underlying cause.
-     *
-     * @param message exception message
-     * @param cause   actual cause
-     */
-    public DecodingException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

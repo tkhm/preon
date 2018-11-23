@@ -32,6 +32,7 @@ import org.codehaus.preon.annotation.BoundList;
 import org.codehaus.preon.annotation.BoundNumber;
 import org.codehaus.preon.annotation.BoundString;
 import org.codehaus.preon.util.EvenlyDistributedLazyList;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.util.List;

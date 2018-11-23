@@ -24,6 +24,9 @@
  */
 package org.codehaus.preon.util;
 
+import org.codehaus.preon.el.Descriptive;
+import org.codehaus.preon.el.util.StringBuilderDocument;
+
 /**
  * A collection of text utilities.
  *
@@ -37,8 +40,22 @@ public class TextUtils {
             "sixteen", "seventeen", "eighteen", "nineteen", "twenty"};
 
     /**
+     * Describes a {@link Descriptive} element by calling its {@link Descriptive#document(org.codehaus.preon.el.Document)}
+     * operation, and turning the results back into a String.
+     *
+     * @param descriptive The object to be described.
+     * @return A String.
+     */
+    public static String toString(Descriptive descriptive) {
+        StringBuilder builder = new StringBuilder();
+        descriptive.document(new StringBuilderDocument(builder));
+        return builder.toString();
+    }
+
+    /**
      * Returns a position as text.
      *
+     * @param position The position.
      * @return A text representation of that position.
      */
     public static String getPositionAsText(int value) {
